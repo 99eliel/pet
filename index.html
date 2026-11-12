@@ -7,9 +7,15 @@
   <meta name="description" content="Quiz do Grupo 6 do PET Saúde: dez perguntas aleatórias e ranking por pontos.">
   <title>Quiz do Grupo 6 | PET Saúde</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/icon-192.png" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Quiz PET 6">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
   <script type="module" src="app.js"></script>
+  <script type="module" src="install.js"></script>
 </head>
 <body>
   <div class="ambient ambient-one" aria-hidden="true"></div>
@@ -49,7 +55,14 @@
               <div class="metric-divider"></div>
               <div class="metric"><span class="metric-symbol">✦</span><div><strong id="heroMaxScore">2.000</strong><small>Pontos máximos</small></div></div>
             </div>
-            <button class="btn btn-primary btn-large" id="startButton" type="button">Iniciar desafio <span aria-hidden="true">↗</span></button>
+            <div class="hero-actions">
+              <button class="btn btn-primary btn-large" id="startButton" type="button">Iniciar desafio <span aria-hidden="true">↗</span></button>
+              <button class="btn btn-install" id="installAppButton" type="button" aria-describedby="installAppStatus">
+                <span class="install-button-icon" aria-hidden="true">↓</span>
+                Instalar aplicativo
+              </button>
+            </div>
+            <p id="installAppStatus" class="install-status" role="status" aria-live="polite"></p>
             <p class="demo-notice" id="demoNotice"><span aria-hidden="true">ⓘ</span> Demonstração com perguntas ilustrativas. O conteúdo oficial ainda será inserido.</p>
           </div>
           <div class="hero-pattern" aria-hidden="true"><span class="pattern-ring"></span><span class="pattern-cross">+</span><span class="pattern-spark">✳</span></div>
@@ -143,6 +156,17 @@
       </div>
     </section>
   </main>
+  <dialog id="installHelpDialog" class="install-dialog" aria-labelledby="installHelpTitle" aria-describedby="installHelpIntro">
+    <div class="install-dialog-heading">
+      <div class="install-dialog-icon" aria-hidden="true">↓</div>
+      <button id="installHelpClose" class="install-dialog-close" type="button" aria-label="Fechar instruções">✕</button>
+    </div>
+    <h2 id="installHelpTitle">Instalar Quiz PET Saúde</h2>
+    <p id="installHelpIntro">Adicione o quiz à tela inicial do dispositivo.</p>
+    <ol id="installHelpSteps"></ol>
+    <p class="install-dialog-foot">Depois de instalado, o quiz abre como um aplicativo, sem precisar acessar o navegador. O jogo funciona offline após ser carregado com internet.</p>
+    <button class="btn btn-primary install-dialog-done" type="button" onclick="document.getElementById('installHelpDialog').close()">Entendi</button>
+  </dialog>
   <footer class="site-footer container"><span>© <span id="currentYear"></span> • Grupo 6 · PET Saúde</span><span>Conhecimento que transforma.</span></footer>
 </body>
 </html>
