@@ -280,11 +280,13 @@ async function finishQuiz() {
     const ordered = rankEntries([...currentRanking, record]);
     const place = ordered.findIndex(entry => entry.name.toLocaleLowerCase('pt-BR') === player.toLocaleLowerCase('pt-BR'));
     $('rankPosition').textContent = place === -1 ? '—' : (place + 1) + 'º';
-    $('saveMessage').textContent = saved.locallySaved
-      ? (store.pendingCount > 0
-        ? 'Pontuação salva no tablet. Envio ao Firebase automático quando houver conexão.'
-        : 'Pontuação salva no tablet e sincronizada com o Firebase.')
-      : 'Não foi possível confirmar o salvamento da pontuação.';
+    $('saveMessage').textContent = !saved.locallySaved
+      ? 'Não foi possível confirmar o salvamento da pontuação.'
+      : !saved.isNewBest
+        ? 'Você já tem uma pontuação igual ou melhor registrada no ranking.'
+        : store.pendingCount > 0
+          ? 'Recorde salvo no tablet. Envio ao Firebase pendente.'
+          : 'Recorde salvo e sincronizado com o Firebase.';
   } catch (error) {
     console.error(error);
     $('saveMessage').textContent = 'Não foi possível salvar a pontuação. Confira a conexão ou as permissões do navegador.';
