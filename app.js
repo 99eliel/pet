@@ -23,6 +23,9 @@ let resultTimeoutId = null;
 let questionLocked = true;
 
 function showView(viewName) {
+  document.body.classList.toggle('is-quiz', viewName === 'quizView');
+  document.body.classList.toggle('is-result', viewName === 'resultView');
+  if (viewName !== 'quizView') document.body.classList.remove('answer-revealed');
   for (const id of views) $(id).hidden = id !== viewName;
   window.scrollTo({ top: 0, behavior: 'instant' });
   const heading = $(viewName).querySelector('h1');
@@ -163,6 +166,7 @@ function renderQuestion() {
   $('questionTotal').textContent = '/ ' + questions.length;
   $('questionType').textContent = (question.theme === 'lgpd' ? 'LGPD' : 'SUS') + ' · ' + (question.type === 'boolean' ? 'SIM OU NÃO' : 'MÚLTIPLA ESCOLHA');
   $('questionTitle').textContent = question.prompt;
+  document.body.classList.remove('answer-revealed');
   $('answerFeedback').textContent = '';
   $('answerFeedback').classList.remove('bad');
   $('explanationBox').hidden = true;
@@ -170,6 +174,7 @@ function renderQuestion() {
   $('nextQuestion').hidden = true;
   buildProgress();
   const answers = $('answerGrid');
+  answers.classList.toggle('multiple', question.type === 'multiple');
   answers.replaceChildren();
   for (const [index, option] of question.options.entries()) {
     const button = document.createElement('button');
@@ -184,16 +189,8 @@ function renderQuestion() {
     button.addEventListener('click', () => answerQuestion(index));
     answers.append(button);
   }
+  // O tempo continua sendo medido para a pontuação, sem limite nem relógio visível.
   questionStartedAt = performance.now();
-  tickTimer();
-}
-
-function tickTimer() {
-  if (questionLocked) return;
-  // Cronômetro crescente: é apenas informativo, não encerra a questão.
-  const elapsed = Math.max(0, performance.now() - questionStartedAt);
-  $('timerNumber').textContent = (elapsed / 1000).toFixed(1).replace('.', ',') + 's';
-  frameId = requestAnimationFrame(tickTimer);
 }
 
 function answerQuestion(selectedIndex) {
@@ -217,6 +214,7 @@ function answerQuestion(selectedIndex) {
   });
 
   const feedback = $('answerFeedback');
+  document.body.classList.add('answer-revealed');
   if (isCorrect) {
     correctAnswers += 1;
     // Bônus decai suavemente, sem retirar o direito de responder.
@@ -238,8 +236,7 @@ function answerQuestion(selectedIndex) {
     ? 'Ver meu resultado →' : 'Próxima pergunta →';
   $('nextQuestion').hidden = false;
   $('nextQuestion').focus({ preventScroll: true });
-  // Em tablets na horizontal, garanta que a explicação e o avanço
-  // fiquem visíveis, mesmo quando o conteúdo for mais alto que a tela.
+  // Mantenha o botão de avanço visível inclusive em tablets menores.
   requestAnimationFrame(() => {
     $('nextQuestion').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   });
