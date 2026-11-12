@@ -4,7 +4,7 @@ import { startLeaderboard, rankEntries } from './scores.js';
 const $ = id => document.getElementById(id);
 const views = ['homeView', 'setupView', 'quizView', 'resultView'];
 const number = value => Number(value).toLocaleString('pt-BR');
-const durationMs = quizConfig.secondsPerQuestion * 1000;
+const bonusDecayMs = quizConfig.bonusDecaySeconds * 1000;
 const roundSize = quizConfig.questionsPerRound.boolean + quizConfig.questionsPerRound.multiple;
 const maxScore = roundSize * (quizConfig.correctPoints + quizConfig.maxSpeedBonus);
 let questions = [];
@@ -19,7 +19,6 @@ let correctAnswers = 0;
 let totalAnswerTimeMs = 0;
 let questionStartedAt = 0;
 let frameId = null;
-let transitionId = null;
 let resultTimeoutId = null;
 let questionLocked = true;
 
@@ -112,10 +111,6 @@ function clearQuestionTimers() {
     cancelAnimationFrame(frameId);
     frameId = null;
   }
-  if (transitionId !== null) {
-    clearTimeout(transitionId);
-    transitionId = null;
-  }
   questionLocked = true;
 }
 
@@ -185,18 +180,9 @@ function renderQuestion() {
 
 function tickTimer() {
   if (questionLocked) return;
+  // Cronômetro crescente: é apenas informativo, não encerra a questão.
   const elapsed = Math.max(0, performance.now() - questionStartedAt);
-  const remaining = Math.max(0, durationMs - elapsed);
-  const fraction = durationMs ? remaining / durationMs : 0;
-  $('timerNumber').textContent = (remaining / 1000).toFixed(1).replace('.', ',') + 's';
-  $('timerBar').style.width = (fraction * 100).toFixed(2) + '%';
-  const urgent = remaining <= 5000;
-  $('timerNumber').classList.toggle('urgent', urgent);
-  $('timerBar').classList.toggle('urgent', urgent);
-  if (remaining <= 0) {
-    answerQuestion(null);
-    return;
-  }
+  $('timerNumber').textContent = (elapsed / 1000).toFixed(1).replace('.', ',') + 's';
   frameId = requestAnimationFrame(tickTimer);
 }
 
@@ -207,11 +193,9 @@ function answerQuestion(selectedIndex) {
   frameId = null;
 
   const question = questions[questionIndex];
-  const elapsed = selectedIndex === null
-    ? durationMs
-    : Math.min(durationMs, Math.max(0, performance.now() - questionStartedAt));
-  const timedOut = selectedIndex === null || elapsed >= durationMs;
-  const isCorrect = !timedOut && selectedIndex === question.correctIndex;
+  // Sem prazo máximo: uma resposta correta sempre pontua, mesmo que demore.
+  const elapsed = Math.max(0, performance.now() - questionStartedAt);
+  const isCorrect = selectedIndex === question.correctIndex;
   totalAnswerTimeMs += elapsed;
 
   const buttons = [...$('answerGrid').querySelectorAll('.answer-option')];
@@ -225,15 +209,16 @@ function answerQuestion(selectedIndex) {
   const feedback = $('answerFeedback');
   if (isCorrect) {
     correctAnswers += 1;
-    const speedRatio = Math.max(0, (durationMs - elapsed) / durationMs);
-    const earned = quizConfig.correctPoints + Math.round(speedRatio * quizConfig.maxSpeedBonus);
+    // Bônus decai suavemente, sem retirar o direito de responder.
+    const speedBonus = Math.round(quizConfig.maxSpeedBonus * Math.exp(-elapsed / bonusDecayMs));
+    const earned = quizConfig.correctPoints + speedBonus;
     totalScore += earned;
     $('runningScore').textContent = number(totalScore);
     feedback.textContent = '✓ Resposta correta! +' + number(earned) + ' pontos';
   } else {
     feedback.classList.add('bad');
-    feedback.textContent = (timedOut ? '⏰ Tempo esgotado!' : '✕ Resposta incorreta.')
-      + ' Resposta certa: ' + question.options[question.correctIndex];
+    feedback.textContent = '✕ Resposta incorreta. Resposta certa: '
+      + question.options[question.correctIndex];
   }
 
   // O participante lê a justificativa sem o relógio correndo.
@@ -248,9 +233,6 @@ function answerQuestion(selectedIndex) {
   requestAnimationFrame(() => {
     $('nextQuestion').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   });
-  // Se o visitante deixar o jogo na explicação, o tablet se libera
-  // automaticamente para a pessoa seguinte após 90 segundos.
-  transitionId = setTimeout(goHome, 90_000);
 }
 
 function advanceAfterFeedback() {
@@ -334,8 +316,8 @@ function initialize() {
     $('demoNotice').textContent = 'As perguntas precisam ser revisadas antes de iniciar.';
     return;
   }
-  $('heroSeconds').textContent = quizConfig.secondsPerQuestion + 's';
-  $('rulesSeconds').textContent = quizConfig.secondsPerQuestion + ' segundos';
+  $('heroSeconds').textContent = 'Livre';
+  $('rulesSeconds').textContent = 'o tempo que precisar';
   $('heroMaxScore').textContent = number(maxScore);
   $('maxResultScore').textContent = number(maxScore);
   $('demoNotice').hidden = !quizConfig.isDemo;
