@@ -76,3 +76,22 @@ Site previsto: https://99eliel.github.io/pet/
 | `firebase.json`, `.firebaserc` | Configuração para Firebase CLI |
 | `sw.js` | Suporte offline |
 | `assets/logo-pet.svg` | Logo original do PET Saúde |
+
+
+## Instalação como aplicativo (PWA)
+
+O quiz agora é um **Progressive Web App** instalável no Android, Windows e outros navegadores compatíveis. Também pode ser adicionado à tela inicial de iPhones e iPads.
+
+**Pelo botão do site:** abra https://99eliel.github.io/pet/ e toque em **Instalar aplicativo** na tela inicial. Se o Chrome ou Edge disponibilizar o evento nativo de instalação, a janela oficial do navegador será aberta. Se o navegador não oferecer esse evento, o botão mostrará orientações específicas. Quando o app já está aberto em modo instalado, o botão fica oculto.
+
+- **Android (Chrome):** use o botão, confirme a instalação. Se a confirmação não aparecer, toque no menu ⋮ e escolha **Instalar app** ou **Adicionar à tela inicial**.
+- **iPhone/iPad (Safari):** abra o site no Safari, toque em **Compartilhar**, depois **Adicionar à Tela de Início**.
+- **Windows (Chrome/Edge):** use o botão ou o ícone de instalação na barra de endereços.
+- O app instalado tem ícone próprio **PET Saúde**, abre sem barra de endereço e usa a mesma base de perguntas.
+- O **manifest** inclui ícones PNG de 192x192 e 512x512 pixels, nome, cor e escopo do GitHub Pages.
+- O **service worker** armazena páginas, scripts, questões, estilos e imagens. Para usar offline, abra o site **com internet ao menos uma vez**, aguarde a carga e **teste com o Wi-Fi desligado** antes da feira.
+- O **ranking Firebase só sincroniza quando houver internet**; partidas offline ficam no armazenamento local e serão enviadas depois, desde que os dados não sejam apagados.
+
+Os arquivos relevantes são \`manifest.webmanifest\`, \`install.js\`, \`sw.js\` e \`assets/icon-{192,512}.png\`. A instalação exige que o site seja servido por **HTTPS**; o GitHub Pages fornece HTTPS.
+
+**Após alterar o PWA:** se o botão não aparecer, recarregue o site com internet e aguarde a atualização do service worker. Se o app já estiver instalado, o botão fica escondido por padrão. Caso o navegador ainda não ofereça o prompt automático, o botão continuará apresentando instruções manuais.
