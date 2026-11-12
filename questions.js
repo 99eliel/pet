@@ -11,7 +11,7 @@
  * 1 questão LGPD + 2 SUS de A–D. Alternativas A–D são embaralhadas.
  */
 export const quizConfig = Object.freeze({
-  title: 'Quiz do Grupo 6 do PET Saúde',
+  title: 'Quiz PET Saúde',
   // A resposta nunca expira. Este valor controla apenas o bônus por rapidez.
   bonusDecaySeconds: 15,
   correctPoints: 100,
