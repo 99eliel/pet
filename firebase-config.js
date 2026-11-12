@@ -1,24 +1,14 @@
 /**
- * Cole aqui o objeto de configuração WEB do seu projeto Firebase quando
- * desejar um ranking compartilhado entre todos os aparelhos.
- *
- * Exemplo:
- * export const firebaseConfig = {
- *   apiKey: '...',
- *   authDomain: 'seu-projeto.firebaseapp.com',
- *   projectId: 'seu-projeto',
- *   appId: '...'
- * };
- *
- * O quiz continua funcionando SEM Firebase, com ranking local.
- * Para habilitar o ranking geral é necessário também:
- * 1. Publicar as perguntas oficiais e definir isDemo: false em questions.js;
- * 2. Habilitar Authentication > Anonymous no Firebase;
- * 3. Criar Firestore e aplicar firestore.rules;
- * 4. Definir domínios autorizados em Authentication.
- *
- * ATENÇÃO: regras de Firestore validam o FORMATO dos resultados, mas não
- * conseguem verificar se o jogador acertou honestamente. Para competição
- * com prêmios, pontuação deve ser validada em um backend confiável.
+ * Configuração pública do aplicativo Web Firebase do Grupo 6.
+ * A apiKey Web identifica o projeto; NÃO é uma chave de administrador.
+ * Segurança real: regras do Firestore, Authentication e App Check (opcional).
  */
-export const firebaseConfig = null;
+export const firebaseConfig = {
+  apiKey: "AIzaSyDzaY2etL8bvp-EBgGMr-2CCmtPEvh6owU",
+  authDomain: "petsaude6.firebaseapp.com",
+  projectId: "petsaude6",
+  storageBucket: "petsaude6.firebasestorage.app",
+  messagingSenderId: "564116748878",
+  appId: "1:564116748878:web:dd49102b5666302a5f211f",
+  measurementId: "G-9YR8PD757G"
+};
