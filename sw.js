@@ -1,10 +1,10 @@
 /* Funcionamento offline no tablet depois da primeira abertura online. */
-const CACHE = 'pet-grupo6-feira-v2';
+const CACHE = 'pet-grupo6-feira-v3';
 const PREFIX = 'pet-grupo6-';
 const APP_FILES = [
   './', './index.html', './styles.css', './app.js',
   './questions.js', './scores.js', './firebase-config.js',
-  './assets/favicon.svg', './manifest.webmanifest'
+  './assets/favicon.svg', './assets/logo-pet.svg', './manifest.webmanifest'
 ];
 
 self.addEventListener('install', event => {
