@@ -17,7 +17,7 @@ export const quizConfig = Object.freeze({
   correctPoints: 100,
   maxSpeedBonus: 100,
   isDemo: false,
-  questionSetVersion: 'feira-lgpd-sus-v1',
+  questionSetVersion: 'feira-lgpd-sus-v2',
   questionsPerRound: { boolean: 7, multiple: 3 },
   perTheme: {
     boolean: { lgpd: 2, sus: 5 },
