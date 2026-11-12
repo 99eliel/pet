@@ -191,6 +191,9 @@ function renderQuestion() {
   }
   // O tempo continua sendo medido para a pontuação, sem limite nem relógio visível.
   questionStartedAt = performance.now();
+  // O visitante pode ter rolado a explicação anterior; a nova pergunta
+  // sempre deve aparecer desde o início na tela do tablet.
+  window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
 function answerQuestion(selectedIndex) {
