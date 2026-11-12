@@ -60,7 +60,7 @@ function showHelp() {
     steps = [
       'Abra este site no Chrome ou Microsoft Edge.',
       'Procure o ícone de instalação na barra de endereços ou no menu (⋮).',
-      'Selecione “Instalar Quiz PET 6” e confirme. No Safari do Mac, use Arquivo → Adicionar ao Dock.'
+      'Selecione “Instalar Quiz PET Saúde” e confirme. No Safari do Mac, use Arquivo → Adicionar ao Dock.'
     ];
   }
   for (const text of steps) {
