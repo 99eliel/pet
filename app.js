@@ -243,6 +243,11 @@ function answerQuestion(selectedIndex) {
     ? 'Ver meu resultado →' : 'Próxima pergunta →';
   $('nextQuestion').hidden = false;
   $('nextQuestion').focus({ preventScroll: true });
+  // Em tablets na horizontal, garanta que a explicação e o avanço
+  // fiquem visíveis, mesmo quando o conteúdo for mais alto que a tela.
+  requestAnimationFrame(() => {
+    $('nextQuestion').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  });
 }
 
 function advanceAfterFeedback() {
