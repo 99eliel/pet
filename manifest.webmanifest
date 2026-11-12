@@ -1,16 +1,16 @@
 {
   "id": "./",
-  "name": "Quiz do Grupo 6 do PET Saúde",
-  "short_name": "Quiz PET 6",
-  "description": "Quiz interativo sobre LGPD e SUS do Grupo 6 do PET Saúde.",
+  "name": "Quiz PET Saúde",
+  "short_name": "Quiz PET Saúde",
+  "description": "Quiz colaborativo sobre LGPD, SUS e proteção de dados na saúde.",
   "lang": "pt-BR",
   "dir": "ltr",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#edf3f1",
-  "theme_color": "#123d43",
+  "background_color": "#071820",
+  "theme_color": "#091b22",
   "categories": [
     "education",
     "health",
@@ -28,6 +28,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "./assets/logo-pet-vetorial.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ]
 }
