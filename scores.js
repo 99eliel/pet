@@ -1,109 +1,237 @@
 import { firebaseConfig } from './firebase-config.js';
 
-/** Normaliza e classifica por pontuação; empate: menor tempo. */
+/**
+ * Ranking do PET Saúde — armazenamento local + sincronização Firestore.
+ *
+ * Cada partida terminada é guardada no tablet imediatamente e recebe um ID
+ * estável. Se a internet cair, o envio é refeito automaticamente quando
+ * voltar a conexão. setDoc com ID fixo evita envios duplicados.
+ */
+const LOCAL_KEY = 'pet-grupo6-ranking-local-v2';
+const PENDING_KEY = 'pet-grupo6-ranking-pending-v2';
+const LEGACY_KEY = 'pet-grupo6-ranking-v1';
+const COLLECTION = 'pet_grupo6_ranking';
+
+const normalizeName = name => String(name || '').trim().replace(/\s+/g, ' ').slice(0, 28);
+
+/** Retém a melhor partida por nome. Empate: menor tempo total. */
 export function rankEntries(entries) {
   const byName = new Map();
-  for (const entry of entries) {
-    if (!entry || typeof entry.name !== 'string' || !Number.isFinite(entry.score)) continue;
-    const name = entry.name.trim().slice(0, 28);
-    if (!name) continue;
-    const normalized = { ...entry, name, elapsedMs: Number(entry.elapsedMs) || 0 };
+  for (const row of entries) {
+    if (!row || typeof row.name !== 'string' || !Number.isFinite(row.score)) continue;
+    const name = normalizeName(row.name);
+    if (!name || row.score < 0) continue;
+    const entry = {
+      ...row,
+      name,
+      elapsedMs: Number.isFinite(row.elapsedMs) ? row.elapsedMs : 0
+    };
     const key = name.toLocaleLowerCase('pt-BR');
-    const current = byName.get(key);
-    if (!current || normalized.score > current.score ||
-      (normalized.score === current.score && normalized.elapsedMs < current.elapsedMs)) {
-      byName.set(key, normalized);
+    const prior = byName.get(key);
+    if (!prior || entry.score > prior.score ||
+        (entry.score === prior.score && entry.elapsedMs < prior.elapsedMs)) {
+      byName.set(key, entry);
     }
   }
-  return [...byName.values()].sort((a, b) => b.score - a.score || a.elapsedMs - b.elapsedMs
-    || String(a.name).localeCompare(String(b.name), 'pt-BR'));
+  return [...byName.values()].sort((a,b) => b.score - a.score
+    || a.elapsedMs - b.elapsedMs || a.name.localeCompare(b.name, 'pt-BR'));
 }
 
-function useLocalScores(onChange, onMode, config) {
-  const key = config.isDemo ? 'pet-grupo6-ranking-demo-v1' : 'pet-grupo6-ranking-v1';
-  const load = () => {
-    try {
-      const data = JSON.parse(localStorage.getItem(key) || '[]');
-      return Array.isArray(data) ? data : [];
-    } catch { return []; }
+function readArray(key) {
+  try {
+    const data = JSON.parse(localStorage.getItem(key) || '[]');
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.warn('Armazenamento indisponível:', key, error);
+    return [];
+  }
+}
+
+function persistArray(key, array) {
+  localStorage.setItem(key, JSON.stringify(array));
+}
+
+function makeId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  // Fallback caso a API de UUID não exista neste navegador.
+  return String(Date.now()) + '-' + Math.random().toString(36).slice(2, 15);
+}
+
+export function startLeaderboard({ config, onChange, onMode }) {
+  const hasConfig = firebaseConfig?.apiKey && firebaseConfig?.projectId;
+  let local = readArray(LOCAL_KEY);
+  let pending = readArray(PENDING_KEY);
+  let remote = [];
+  let syncRunning = null;
+  let remoteReady = false;
+  let authReady = false;
+  let lastError = '';
+  let active = true;
+  let firestore = null;
+  let auth = null;
+  let firebaseApi = null;
+  let unsubscribe = null;
+  let connectionAttempt = null;
+  let lastServerSnapshot = false;
+
+  // Resultados do ranking local usado nas primeiras versões, preservados
+  // como backup. Não reenviamos pontuações antigas sem um ID de partida.
+  const old = readArray(LEGACY_KEY);
+  const localOnlyLegacy = old.filter(e => !local.some(row =>
+    row.name === e.name && row.score === e.score && row.elapsedMs === e.elapsedMs));
+
+  const status = () => {
+    if (!hasConfig) return 'local';
+    if (!remoteReady || !authReady) return lastError ? 'erro' : 'conectando';
+    if (!lastServerSnapshot) return 'offline';
+    return pending.length ? 'pendente' : 'online';
   };
-  const emit = () => onChange(rankEntries(load()), 'local');
-  window.addEventListener('storage', (event) => { if (event.key === key) emit(); });
-  onMode('local');
-  emit();
-  return {
-    mode: 'local',
-    refresh: emit,
+
+  const emit = () => {
+    const combined = rankEntries([...remote, ...local, ...localOnlyLegacy]);
+    onMode(status(), pending.length);
+    onChange(combined, status());
+  };
+  const store = {
+    get mode() { return status(); },
+    get pendingCount() { return pending.length; },
+    refresh() { emit(); },
     async save(result) {
-      const record = { ...result, createdAt: Date.now() };
-      const all = rankEntries([...load(), record]).slice(0, 100);
-      try { localStorage.setItem(key, JSON.stringify(all)); } catch {
-        throw new Error('Não foi possível salvar neste navegador. Verifique se o armazenamento local está permitido.');
+      const row = {
+        id: makeId(),
+        name: normalizeName(result.name),
+        score: Math.round(result.score),
+        correct: Math.round(result.correct),
+        total: Math.round(result.total),
+        elapsedMs: Math.max(0, Math.round(result.elapsedMs)),
+        questionSet: config.questionSetVersion,
+        savedAt: Date.now()
+      };
+      // Salvar primeiro no tablet é crucial: depois de cinco segundos,
+      // a tela de resultado se fecha mesmo sem conexão.
+      local = rankEntries([...local, row]).slice(0, 300);
+      pending.push(row);
+      try {
+        persistArray(LOCAL_KEY, local);
+        persistArray(PENDING_KEY, pending);
+      } catch (error) {
+        console.error('Erro ao gravar pontuação no tablet:', error);
+        throw new Error('Sem permissão para guardar a pontuação no tablet.');
       }
       emit();
-      return record;
+      if (authReady && firestore) {
+        // Não bloqueia a página de resultados enquanto o Wi-Fi estiver lento.
+        syncPending().catch(error => console.warn('Sincronização pendente:', error));
+      }
+      return { locallySaved: true, pending: true };
     }
   };
-}
 
-/**
- * Ranking geral opcional, usando Firebase Firestore + Authentication anônima.
- * Com configurações ausentes ou perguntas de demonstração, usa somente
- * armazenamento local do navegador (não compartilhado entre aparelhos).
- */
-export async function startLeaderboard({ config, onChange, onMode }) {
-  if (config.isDemo || !firebaseConfig || !firebaseConfig.apiKey || !firebaseConfig.projectId) {
-    return useLocalScores(onChange, onMode, config);
-  }
-
-  try {
-    const [
-      { initializeApp, getApps, getApp },
-      { getFirestore, collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp },
-      { getAuth, signInAnonymously }
-    ] = await Promise.all([
-      import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js'),
-      import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js'),
-      import('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js')
-    ]);
-    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    await signInAnonymously(auth);
-    const db = getFirestore(app);
-    const scores = collection(db, 'pet_grupo6_ranking');
-    const rankingQuery = query(scores, orderBy('score', 'desc'), limit(100));
-    let cached = [];
-    let listenerError = null;
-    onSnapshot(rankingQuery, snapshot => {
-      cached = rankEntries(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      listenerError = null;
-      onChange(cached, 'online');
-    }, error => {
-      listenerError = error;
-      console.error('Erro ao buscar ranking:', error);
-      onMode('erro');
-    });
-    onMode('online');
-    return {
-      mode: 'online',
-      refresh() { onChange(cached, listenerError ? 'erro' : 'online'); },
-      async save(result) {
-        if (listenerError) throw new Error('O ranking online está indisponível.');
-        const payload = {
-          name: result.name,
-          score: result.score,
-          correct: result.correct,
-          total: result.total,
-          elapsedMs: result.elapsedMs,
-          questionSet: config.questionSetVersion,
-          createdAt: serverTimestamp()
-        };
-        await addDoc(scores, payload);
-        return payload;
+  const syncPending = () => {
+    if (!authReady || !firestore || !pending.length || !active) return Promise.resolve();
+    if (syncRunning) return syncRunning;
+    syncRunning = (async () => {
+      while (pending.length && authReady && active) {
+        const item = pending[0];
+        try {
+          await firebaseApi.setDoc(
+            firebaseApi.doc(firestore, COLLECTION, item.id),
+            {
+              name: item.name,
+              score: item.score,
+              correct: item.correct,
+              total: item.total,
+              elapsedMs: item.elapsedMs,
+              questionSet: item.questionSet,
+              submittedBy: auth.currentUser.uid,
+              createdAt: firebaseApi.serverTimestamp()
+            }
+          );
+          // Remove apenas depois de receber confirmação de gravação.
+          pending = pending.filter(row => row.id !== item.id);
+          persistArray(PENDING_KEY, pending);
+          lastError = '';
+          emit();
+        } catch (error) {
+          lastError = error?.code || String(error);
+          console.warn('Falha ao sincronizar pontuação:', error);
+          emit();
+          break;
+        }
       }
-    };
-  } catch (error) {
-    console.warn('Ranking online indisponível. Usando ranking local.', error);
-    return useLocalScores(onChange, onMode, config);
+    })().finally(() => { syncRunning = null; });
+    return syncRunning;
+  };
+
+  async function connect() {
+    if (!hasConfig || !active) return;
+    if (connectionAttempt) return connectionAttempt;
+    connectionAttempt = (async () => {
+      try {
+        const [
+          { initializeApp, getApps, getApp },
+          { getFirestore, collection, query, orderBy, limit, onSnapshot, doc, setDoc, serverTimestamp },
+          { getAuth, signInAnonymously }
+        ] = await Promise.all([
+          import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js'),
+          import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js'),
+          import('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js')
+        ]);
+        const app = getApps().some(a => a.name === '[DEFAULT]')
+          ? getApp() : initializeApp(firebaseConfig);
+        firestore = getFirestore(app);
+        auth = getAuth(app);
+        firebaseApi = { doc, setDoc, serverTimestamp };
+        await signInAnonymously(auth);
+        authReady = Boolean(auth.currentUser);
+        remoteReady = true;
+        const collectionRef = collection(firestore, COLLECTION);
+        const top = query(collectionRef, orderBy('score', 'desc'), limit(100));
+        unsubscribe = onSnapshot(top, { includeMetadataChanges: true }, snapshot => {
+          remote = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          lastServerSnapshot = !snapshot.metadata.fromCache;
+          lastError = '';
+          emit();
+          if (lastServerSnapshot) syncPending().catch(console.warn);
+        }, error => {
+          lastError = error?.code || String(error);
+          lastServerSnapshot = false;
+          console.error('Erro ao consultar ranking Firebase:', error);
+          emit();
+        });
+        emit();
+        syncPending().catch(console.warn);
+      } catch (error) {
+        authReady = false;
+        remoteReady = false;
+        lastServerSnapshot = false;
+        lastError = error?.code || String(error);
+        console.warn('Firebase indisponível; modo local ativo:', error);
+        emit();
+      }
+    })().finally(() => { connectionAttempt = null; });
+    return connectionAttempt;
   }
+
+  window.addEventListener('online', () => {
+    if (!remoteReady || !authReady) connect();
+    else syncPending().catch(console.warn);
+    emit();
+  });
+  window.addEventListener('offline', () => {
+    lastServerSnapshot = false;
+    emit();
+  });
+  window.addEventListener('storage', event => {
+    if (![LOCAL_KEY, PENDING_KEY, LEGACY_KEY].includes(event.key)) return;
+    local = readArray(LOCAL_KEY);
+    pending = readArray(PENDING_KEY);
+    emit();
+  });
+
+  emit();
+  connect();
+  return store;
 }
