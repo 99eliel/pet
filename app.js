@@ -71,14 +71,24 @@ function renderRanking(entries) {
   }
 }
 
-function setRankingMode(mode) {
+function setRankingMode(mode, pendingCount = 0) {
   rankingMode = mode;
   const indicator = $('rankingIndicator');
   indicator.classList.toggle('online', mode === 'online');
   const scope = $('rankingScope');
-  if (mode === 'online') scope.textContent = 'Ranking geral • atualizado automaticamente';
-  else if (mode === 'erro') scope.textContent = 'Conexão do ranking indisponível';
-  else scope.textContent = quizConfig.isDemo ? 'Ranking de teste • neste aparelho' : 'Ranking deste aparelho';
+  if (mode === 'online') {
+    scope.textContent = 'Ranking geral • Firebase conectado';
+  } else if (mode === 'pendente') {
+    scope.textContent = 'Firebase conectado • ' + pendingCount + ' resultado(s) por enviar';
+  } else if (mode === 'conectando') {
+    scope.textContent = 'Conectando ao ranking do Firebase…';
+  } else if (mode === 'offline') {
+    scope.textContent = 'Sem conexão • pontuações salvas no tablet';
+  } else if (mode === 'erro') {
+    scope.textContent = 'Firebase indisponível • pontuações salvas no tablet';
+  } else {
+    scope.textContent = 'Ranking salvo neste tablet';
+  }
 }
 
 function goHome() {
@@ -266,13 +276,15 @@ async function finishQuiz() {
   try {
     const store = leaderboardStore || await leaderboardPromise;
     if (!store) throw new Error('Ranking indisponível.');
-    await store.save(record);
+    const saved = await store.save(record);
     const ordered = rankEntries([...currentRanking, record]);
     const place = ordered.findIndex(entry => entry.name.toLocaleLowerCase('pt-BR') === player.toLocaleLowerCase('pt-BR'));
     $('rankPosition').textContent = place === -1 ? '—' : (place + 1) + 'º';
-    $('saveMessage').textContent = store.mode === 'online'
-      ? 'Sua pontuação foi enviada para o ranking geral.'
-      : 'Pontuação salva neste aparelho. O ranking geral ainda não foi ativado.';
+    $('saveMessage').textContent = saved.locallySaved
+      ? (store.pendingCount > 0
+        ? 'Pontuação salva no tablet. Envio ao Firebase automático quando houver conexão.'
+        : 'Pontuação salva no tablet e sincronizada com o Firebase.')
+      : 'Não foi possível confirmar o salvamento da pontuação.';
   } catch (error) {
     console.error(error);
     $('saveMessage').textContent = 'Não foi possível salvar a pontuação. Confira a conexão ou as permissões do navegador.';
@@ -332,18 +344,18 @@ function initialize() {
     });
   }
   setRankingMode('local');
-  leaderboardPromise = startLeaderboard({
-    config: quizConfig,
-    onChange: renderRanking,
-    onMode: setRankingMode
-  }).then(store => {
-    leaderboardStore = store;
-    return store;
-  }).catch(error => {
+  try {
+    leaderboardStore = startLeaderboard({
+      config: quizConfig,
+      onChange: renderRanking,
+      onMode: setRankingMode
+    });
+    leaderboardPromise = Promise.resolve(leaderboardStore);
+  } catch (error) {
     console.error('Falha ao inicializar ranking:', error);
     setRankingMode('erro');
-    return null;
-  });
+    leaderboardPromise = Promise.resolve(null);
+  }
 }
 
 initialize();
