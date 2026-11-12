@@ -21,15 +21,15 @@ Quiz para **um tablet no estande da feira**, com foco em **Privacidade e Proteç
    - **2 LGPD + 5 SUS**, todas de Sim/Não;
    - **1 LGPD + 2 SUS**, todas de múltipla escolha A–D.
 4. As dez perguntas aparecem em **ordem aleatória**. Nas perguntas A–D, as alternativas também são embaralhadas; os botões Sim/Não ficam na posição habitual.
-5. Tem **15 segundos para responder cada pergunta**. O relógio é interrompido assim que responder.
+5. Pode responder **sem limite de tempo**: o cronômetro conta para cima, mas nunca encerra a pergunta. Ele é interrompido assim que a pessoa responde.
 6. Depois de responder (ou esgotar o tempo), vê **a resposta correta e uma explicação breve**. Toca em **Próxima pergunta** para avançar.
 7. Ao terminar, recebe a pontuação, número de acertos, tempo gasto e colocação.
-8. **Próximo participante** limpa o nome e começa outro atendimento. Se não houver interação, a tela de resultados retorna à inicial em **60 segundos**.
+8. **Próximo participante** limpa o nome e começa outro atendimento. Se não houver interação, a tela de resultados retorna à inicial em **5 segundos**.
 
 ### Pontuação
 
-- Acerto = **100 pontos + bônus de até 100 pontos**, proporcional ao tempo restante.
-- Resposta errada ou fora do tempo = **zero**.
+- Acerto = **100 pontos + bônus de até 100 pontos** que diminui suavemente com o tempo da resposta. Mesmo demorando, o participante pode responder e receber os 100 pontos fixos.
+- Resposta errada = **zero**. Não existe tempo esgotado.
 - Máximo por partida = **2.000 pontos**.
 - Desempate: **menor tempo total de respostas**.
 - Ranking Top 5 mostra a melhor pontuação por **nome/apelido**. Para pessoas distintas com nome igual, recomende usar um apelido diferente.
@@ -73,4 +73,4 @@ O logotipo que a equipe enviou está em **assets/logo-pet.svg**. É uma versão 
 - Fazer partidas completas no tablet para confirmar tamanho dos textos e botões.
 - Verificar que o ranking abre vazio no aparelho do evento e resiste a fechar/reabrir o navegador.
 - Fazer o teste offline **com o Wi-Fi desligado**, após primeiro carregamento online.
-- Verificar que uma pessoa não consegue passar direto pela explicação sem ler involuntariamente.
+- Verificar as explicações após cada resposta e que o resultado aparece por cinco segundos antes do retorno ao início.
