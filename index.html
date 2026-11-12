@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#113b42">
+  <meta name="description" content="Quiz do Grupo 6 do PET Saúde: dez perguntas, desafios por tempo e ranking de participantes.">
+  <title>Quiz do Grupo 6 | PET Saúde</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="./" aria-label="Quiz do Grupo 6, voltar à página inicial">
+        <span class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 48 48" fill="none"><path d="M24 8v32M8 24h32" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><circle cx="24" cy="24" r="5" fill="#DBF28B"/></svg>
+        </span>
+        <span class="brand-copy"><strong>PET Saúde</strong><small>GRUPO 06</small></span>
+      </a>
+      <div class="header-label"><span class="live-dot" aria-hidden="true"></span> Quiz interativo</div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="view" id="homeView" aria-labelledby="homeTitle">
+      <div class="home-grid">
+        <div class="hero panel">
+          <div class="hero-glow" aria-hidden="true"></div>
+          <div class="hero-main">
+            <div class="eyebrow"><span class="eyebrow-line"></span> APRENDA • PARTICIPE • DESAFIE-SE</div>
+            <div class="hero-logo" aria-label="Identidade PET Saúde, Grupo 6">
+              <img src="assets/logo-pet.png" alt="Logotipo do Grupo 6 do PET Saúde" id="uploadedLogo" hidden>
+              <div class="illustrated-logo" id="fallbackLogo" aria-hidden="true">
+                <div class="pet-mark"><i></i><i></i><i></i><i></i><i></i><i></i><span>+</span></div>
+                <div class="pet-wordmark"><strong>PET<span>SAÚDE</span></strong><small>GRUPO 6</small></div>
+              </div>
+            </div>
+            <h1 id="homeTitle">Quiz do <span>Grupo 6</span><br>do PET Saúde<span class="title-period">.</span></h1>
+            <p class="hero-description">Mostre o que você sabe! Responda às perguntas, acumule pontos e conquiste um lugar entre os melhores do ranking.</p>
+            <div class="hero-metrics" aria-label="Informações do quiz">
+              <div class="metric"><span class="metric-symbol">▦</span><div><strong>10</strong><small>Perguntas</small></div></div>
+              <div class="metric-divider"></div>
+              <div class="metric"><span class="metric-symbol">◷</span><div><strong id="heroSeconds">15s</strong><small>Por pergunta</small></div></div>
+              <div class="metric-divider"></div>
+              <div class="metric"><span class="metric-symbol">✦</span><div><strong id="heroMaxScore">2.000</strong><small>Pontos máximos</small></div></div>
+            </div>
+            <button class="btn btn-primary btn-large" id="startButton" type="button">Iniciar desafio <span aria-hidden="true">↗</span></button>
+            <p class="demo-notice" id="demoNotice"><span aria-hidden="true">ⓘ</span> Versão de demonstração: aguardando as perguntas oficiais.</p>
+          </div>
+          <div class="hero-pattern" aria-hidden="true"><span class="pattern-ring"></span><span class="pattern-cross">+</span><span class="pattern-spark">✳</span></div>
+        </div>
+
+        <aside class="ranking panel" aria-labelledby="rankingTitle">
+          <div class="ranking-header">
+            <div class="ranking-header-icon" aria-hidden="true">🏆</div>
+            <div><div class="overline">QUEM ESTÁ NO TOPO?</div><h2 id="rankingTitle">Top 5 do ranking</h2></div>
+          </div>
+          <div class="rank-description">Os participantes com as maiores pontuações.</div>
+          <ol class="leaderboard-list" id="leaderboardList" aria-label="Cinco melhores participantes">
+            <li class="empty-ranking">Aguardando os primeiros participantes…</li>
+          </ol>
+          <div class="ranking-footer"><span class="ranking-status-indicator" id="rankingIndicator"></span><span id="rankingScope">Ranking deste aparelho</span><button id="refreshRanking" type="button" class="text-button" aria-label="Atualizar ranking">Atualizar ↻</button></div>
+        </aside>
+      </div>
+      <div class="how-it-works">
+        <div class="how-title">COMO FUNCIONA</div>
+        <div class="steps">
+          <div class="step"><span class="step-no">01</span><span>Informe seu nome</span></div>
+          <div class="step-arrow" aria-hidden="true">→</div>
+          <div class="step"><span class="step-no">02</span><span>Responda antes do tempo acabar</span></div>
+          <div class="step-arrow" aria-hidden="true">→</div>
+          <div class="step"><span class="step-no">03</span><span>Suba no ranking!</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="setupView" aria-labelledby="setupTitle" hidden>
+      <div class="stage-card panel stage-card-compact">
+        <button class="back-button" type="button" data-go-home>← Voltar</button>
+        <div class="stage-icon" aria-hidden="true">✳</div>
+        <div class="eyebrow stage-eyebrow">PREPARADO PARA COMEÇAR?</div>
+        <h1 id="setupTitle">Antes de começar...</h1>
+        <p class="stage-intro">Como devemos chamar você no ranking?</p>
+        <form id="playerForm" novalidate>
+          <label for="playerName">Seu nome</label>
+          <input id="playerName" name="playerName" type="text" autocomplete="given-name" maxlength="28" minlength="2" required placeholder="Digite seu nome">
+          <p class="field-error" id="nameError" aria-live="polite"></p>
+          <div class="rule-box">
+            <span aria-hidden="true">⏱</span>
+            <p>Você terá <strong id="rulesSeconds">15 segundos</strong> para cada pergunta. <strong>Acertar rápido vale mais pontos.</strong> Respostas erradas ou fora do tempo não pontuam.</p>
+          </div>
+          <button type="submit" class="btn btn-primary btn-wide">Começar agora <span aria-hidden="true">→</span></button>
+        </form>
+      </div>
+    </section>
+
+    <section class="view" id="quizView" aria-labelledby="questionTitle" hidden>
+      <div class="quiz-wrap">
+        <div class="quiz-meta">
+          <div class="quiz-player"><span class="avatar-icon" aria-hidden="true">★</span><div><small>PARTICIPANTE</small><strong id="currentPlayer">Participante</strong></div></div>
+          <div class="quiz-points"><span>SEUS PONTOS</span><strong id="runningScore">0</strong></div>
+        </div>
+        <div class="quiz-panel panel">
+          <div class="quiz-topline">
+            <div class="question-count"><span id="questionCounter">PERGUNTA 01</span> <span class="question-count-total" id="questionTotal">/ 10</span></div>
+            <div class="question-type" id="questionType">SIM OU NÃO</div>
+          </div>
+          <div class="progress-segments" id="questionProgress" aria-label="Progresso do questionário"></div>
+          <div class="timer-area" aria-live="off"><div class="timer-info"><span>⏳ Tempo restante</span><span class="timer-number" id="timerNumber">15,0s</span></div><div class="timer-track"><div class="timer-bar" id="timerBar"></div></div></div>
+          <h1 id="questionTitle" class="question-title">Pergunta</h1>
+          <p class="question-hint">Selecione uma resposta para continuar.</p>
+          <div class="answer-grid" id="answerGrid" role="group" aria-label="Alternativas de resposta"></div>
+          <div class="feedback" id="answerFeedback" role="status" aria-live="polite"></div>
+          <div class="quiz-bottom"><span id="quizQuestionMark">GRUPO 06 / PET SAÚDE</span><span>⚡ Quanto mais rápido, mais pontos</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="resultView" aria-labelledby="resultTitle" hidden>
+      <div class="result-layout">
+        <div class="result-card panel">
+          <div class="result-confetti" aria-hidden="true"><span>✦</span><span>✳</span><span>✦</span></div>
+          <div class="result-medal" aria-hidden="true">🏅</div>
+          <div class="eyebrow stage-eyebrow">DESAFIO CONCLUÍDO</div>
+          <h1 id="resultTitle">Mandou bem, <span id="resultName">participante</span>!</h1>
+          <p class="result-copy">Você terminou o quiz do Grupo 6 do PET Saúde.</p>
+          <div class="score-result"><div>SUA PONTUAÇÃO</div><strong id="finalScore">0</strong><small>de <span id="maxResultScore">2.000</span> pontos possíveis</small></div>
+          <div class="result-stats"><div><strong id="correctCount">0/10</strong><small>Acertos</small></div><div><strong id="totalTime">0s</strong><small>Tempo total</small></div><div><strong id="rankPosition">—</strong><small>Colocação</small></div></div>
+          <p class="save-message" id="saveMessage" role="status" aria-live="polite"></p>
+          <div class="result-actions"><button class="btn btn-primary" id="playAgain" type="button">Jogar novamente ↗</button><button class="btn btn-outline" id="backToHome" type="button">Ver ranking</button></div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer container"><span>© <span id="currentYear"></span> • Grupo 6 · PET Saúde</span><span>Conhecimento que transforma.</span></footer>
+</body>
+</html>
