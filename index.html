@@ -7,6 +7,7 @@
   <meta name="description" content="Quiz do Grupo 6 do PET Saúde: dez perguntas, desafios por tempo e ranking de participantes.">
   <title>Quiz do Grupo 6 | PET Saúde</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
   <script type="module" src="app.js"></script>
 </head>
@@ -40,7 +41,7 @@
               </div>
             </div>
             <h1 id="homeTitle">Quiz do <span>Grupo 6</span><br>do PET Saúde<span class="title-period">.</span></h1>
-            <p class="hero-description">Mostre o que você sabe! Responda às perguntas, acumule pontos e conquiste um lugar entre os melhores do ranking.</p>
+            <p class="hero-description">Mostre o que você sabe! A cada rodada, perguntas são sorteadas, e quem acerta mais rápido sobe no ranking.</p>
             <div class="hero-metrics" aria-label="Informações do quiz">
               <div class="metric"><span class="metric-symbol">▦</span><div><strong>10</strong><small>Perguntas</small></div></div>
               <div class="metric-divider"></div>
@@ -49,7 +50,7 @@
               <div class="metric"><span class="metric-symbol">✦</span><div><strong id="heroMaxScore">2.000</strong><small>Pontos máximos</small></div></div>
             </div>
             <button class="btn btn-primary btn-large" id="startButton" type="button">Iniciar desafio <span aria-hidden="true">↗</span></button>
-            <p class="demo-notice" id="demoNotice"><span aria-hidden="true">ⓘ</span> Versão de demonstração: aguardando as perguntas oficiais.</p>
+            <p class="demo-notice" id="demoNotice"><span aria-hidden="true">ⓘ</span> Demonstração com perguntas ilustrativas. O conteúdo oficial ainda será inserido.</p>
           </div>
           <div class="hero-pattern" aria-hidden="true"><span class="pattern-ring"></span><span class="pattern-cross">+</span><span class="pattern-spark">✳</span></div>
         </div>
@@ -91,7 +92,7 @@
           <p class="field-error" id="nameError" aria-live="polite"></p>
           <div class="rule-box">
             <span aria-hidden="true">⏱</span>
-            <p>Você terá <strong id="rulesSeconds">15 segundos</strong> para cada pergunta. <strong>Acertar rápido vale mais pontos.</strong> Respostas erradas ou fora do tempo não pontuam.</p>
+            <p>Você terá <strong id="rulesSeconds">15 segundos</strong> em cada pergunta. <strong>Acertar rápido vale mais pontos.</strong> Após responder, leia a breve explicação antes de continuar.</p>
           </div>
           <button type="submit" class="btn btn-primary btn-wide">Começar agora <span aria-hidden="true">→</span></button>
         </form>
@@ -115,6 +116,11 @@
           <p class="question-hint">Selecione uma resposta para continuar.</p>
           <div class="answer-grid" id="answerGrid" role="group" aria-label="Alternativas de resposta"></div>
           <div class="feedback" id="answerFeedback" role="status" aria-live="polite"></div>
+          <div class="explanation-box" id="explanationBox" hidden>
+            <div class="explanation-label">💡 ENTENDA A RESPOSTA</div>
+            <p id="explanationText"></p>
+          </div>
+          <button class="btn btn-primary next-question" id="nextQuestion" type="button" hidden>Próxima pergunta →</button>
           <div class="quiz-bottom"><span id="quizQuestionMark">GRUPO 06 / PET SAÚDE</span><span>⚡ Quanto mais rápido, mais pontos</span></div>
         </div>
       </div>
@@ -131,7 +137,8 @@
           <div class="score-result"><div>SUA PONTUAÇÃO</div><strong id="finalScore">0</strong><small>de <span id="maxResultScore">2.000</span> pontos possíveis</small></div>
           <div class="result-stats"><div><strong id="correctCount">0/10</strong><small>Acertos</small></div><div><strong id="totalTime">0s</strong><small>Tempo total</small></div><div><strong id="rankPosition">—</strong><small>Colocação</small></div></div>
           <p class="save-message" id="saveMessage" role="status" aria-live="polite"></p>
-          <div class="result-actions"><button class="btn btn-primary" id="playAgain" type="button">Jogar novamente ↗</button><button class="btn btn-outline" id="backToHome" type="button">Ver ranking</button></div>
+          <p class="auto-reset" id="resultAutoReset"></p>
+          <div class="result-actions"><button class="btn btn-primary" id="playAgain" type="button">Próximo participante ↗</button><button class="btn btn-outline" id="backToHome" type="button">Ver ranking</button></div>
         </div>
       </div>
     </section>
