@@ -12,7 +12,8 @@
  */
 export const quizConfig = Object.freeze({
   title: 'Quiz do Grupo 6 do PET Saúde',
-  secondsPerQuestion: 15,
+  // A resposta nunca expira. Este valor controla apenas o bônus por rapidez.
+  bonusDecaySeconds: 15,
   correctPoints: 100,
   maxSpeedBonus: 100,
   isDemo: false,
@@ -22,7 +23,7 @@ export const quizConfig = Object.freeze({
     boolean: { lgpd: 2, sus: 5 },
     multiple: { lgpd: 1, sus: 2 }
   },
-  resultResetSeconds: 60
+  resultResetSeconds: 5
 });
 
 export const questionBank = [
@@ -633,6 +634,8 @@ export function validateQuiz() {
       throw new Error('Pergunta inválida: ' + (q.id || '(sem ID)'));
     }
   }
-  if (!(quizConfig.secondsPerQuestion > 0 && quizConfig.correctPoints >= 0
-    && quizConfig.maxSpeedBonus >= 0)) throw new Error('Configuração de tempo/pontos inválida.');
+  if (!(quizConfig.bonusDecaySeconds > 0 && quizConfig.correctPoints >= 0
+    && quizConfig.maxSpeedBonus >= 0 && quizConfig.resultResetSeconds > 0)) {
+    throw new Error('Configuração de pontos ou retorno inválida.');
+  }
 }
