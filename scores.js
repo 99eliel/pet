@@ -102,23 +102,35 @@ export function startLeaderboard({ config, onChange, onMode }) {
         questionSet: config.questionSetVersion,
         savedAt: Date.now()
       };
-      // Salvar primeiro no tablet é crucial: depois de cinco segundos,
-      // a tela de resultado se fecha mesmo sem conexão.
-      local = rankEntries([...local, row]).slice(0, 300);
-      pending.push(row);
-      try {
-        persistArray(LOCAL_KEY, local);
-        persistArray(PENDING_KEY, pending);
-      } catch (error) {
-        console.error('Erro ao gravar pontuação no tablet:', error);
-        throw new Error('Sem permissão para guardar a pontuação no tablet.');
+      // Somente a melhor partida de cada nome precisa ser transmitida.
+      // Evita várias tentativas da mesma pessoa ocuparem todo o Top 100.
+      const best = rankEntries([...remote, ...local])
+        .find(x => x.name.toLocaleLowerCase('pt-BR') === row.name.toLocaleLowerCase('pt-BR'));
+      const isNewBest = !best || row.score > best.score
+        || (row.score === best.score && row.elapsedMs < best.elapsedMs);
+
+      if (isNewBest) {
+        // Salvar primeiro no tablet é crucial: depois de cinco segundos,
+        // a tela de resultado se fecha mesmo sem conexão.
+        local = rankEntries([...local, row]).slice(0, 300);
+        // Substitui tentativa antiga ainda não enviada do mesmo nome.
+        pending = pending.filter(x =>
+          x.name.toLocaleLowerCase('pt-BR') !== row.name.toLocaleLowerCase('pt-BR'));
+        pending.push(row);
+        try {
+          persistArray(LOCAL_KEY, local);
+          persistArray(PENDING_KEY, pending);
+        } catch (error) {
+          console.error('Erro ao gravar pontuação no tablet:', error);
+          throw new Error('Sem permissão para guardar a pontuação no tablet.');
+        }
+        emit();
+        if (authReady && firestore) {
+          // Não bloqueia a página de resultados enquanto o Wi-Fi estiver lento.
+          syncPending().catch(error => console.warn('Sincronização pendente:', error));
+        }
       }
-      emit();
-      if (authReady && firestore) {
-        // Não bloqueia a página de resultados enquanto o Wi-Fi estiver lento.
-        syncPending().catch(error => console.warn('Sincronização pendente:', error));
-      }
-      return { locallySaved: true, pending: true };
+      return { locallySaved: true, isNewBest, pending: pending.length > 0 };
     }
   };
 
