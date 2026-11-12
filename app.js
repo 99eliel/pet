@@ -248,6 +248,9 @@ function answerQuestion(selectedIndex) {
   requestAnimationFrame(() => {
     $('nextQuestion').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   });
+  // Se o visitante deixar o jogo na explicação, o tablet se libera
+  // automaticamente para a pessoa seguinte após 90 segundos.
+  transitionId = setTimeout(goHome, 90_000);
 }
 
 function advanceAfterFeedback() {
