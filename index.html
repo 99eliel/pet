@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#113b42">
-  <meta name="description" content="Quiz do Grupo 6 do PET Saúde: dez perguntas, desafios por tempo e ranking de participantes.">
+  <meta name="description" content="Quiz do Grupo 6 do PET Saúde: dez perguntas aleatórias e ranking por pontos.">
   <title>Quiz do Grupo 6 | PET Saúde</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
@@ -45,7 +45,7 @@
             <div class="hero-metrics" aria-label="Informações do quiz">
               <div class="metric"><span class="metric-symbol">▦</span><div><strong>10</strong><small>Perguntas</small></div></div>
               <div class="metric-divider"></div>
-              <div class="metric"><span class="metric-symbol">◷</span><div><strong id="heroSeconds">15s</strong><small>Por pergunta</small></div></div>
+              <div class="metric"><span class="metric-symbol">◷</span><div><strong id="heroSeconds">Livre</strong><small>Sem limite de tempo</small></div></div>
               <div class="metric-divider"></div>
               <div class="metric"><span class="metric-symbol">✦</span><div><strong id="heroMaxScore">2.000</strong><small>Pontos máximos</small></div></div>
             </div>
@@ -72,7 +72,7 @@
         <div class="steps">
           <div class="step"><span class="step-no">01</span><span>Informe seu nome</span></div>
           <div class="step-arrow" aria-hidden="true">→</div>
-          <div class="step"><span class="step-no">02</span><span>Responda antes do tempo acabar</span></div>
+          <div class="step"><span class="step-no">02</span><span>Responda no seu ritmo</span></div>
           <div class="step-arrow" aria-hidden="true">→</div>
           <div class="step"><span class="step-no">03</span><span>Suba no ranking!</span></div>
         </div>
@@ -92,7 +92,7 @@
           <p class="field-error" id="nameError" aria-live="polite"></p>
           <div class="rule-box">
             <span aria-hidden="true">⏱</span>
-            <p>Você terá <strong id="rulesSeconds">15 segundos</strong> em cada pergunta. <strong>Acertar rápido vale mais pontos.</strong> Após responder, leia a breve explicação antes de continuar.</p>
+            <p>Você pode usar <strong id="rulesSeconds">o tempo que precisar</strong> em cada pergunta. <strong>Acertar rápido dá pontos extras, mas não existe prazo para responder.</strong> Após responder, leia a breve explicação antes de continuar.</p>
           </div>
           <button type="submit" class="btn btn-primary btn-wide">Começar agora <span aria-hidden="true">→</span></button>
         </form>
@@ -111,7 +111,7 @@
             <div class="question-type" id="questionType">SIM OU NÃO</div>
           </div>
           <div class="progress-segments" id="questionProgress" aria-label="Progresso do questionário"></div>
-          <div class="timer-area" aria-live="off"><div class="timer-info"><span>⏳ Tempo restante</span><span class="timer-number" id="timerNumber">15,0s</span></div><div class="timer-track"><div class="timer-bar" id="timerBar"></div></div></div>
+          <div class="timer-area" aria-live="off"><div class="timer-info"><span>⏱ Tempo de resposta · sem limite</span><span class="timer-number" id="timerNumber">0,0s</span></div></div>
           <h1 id="questionTitle" class="question-title">Pergunta</h1>
           <p class="question-hint">Selecione uma resposta para continuar.</p>
           <div class="answer-grid" id="answerGrid" role="group" aria-label="Alternativas de resposta"></div>
