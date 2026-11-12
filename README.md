@@ -1,9 +1,25 @@
-# Quiz do Grupo 6 — PET Saúde
+# Quiz PET Saúde — Raízes Digitais
 
 > **Revisão das perguntas (12/11/2026):** as 40 questões passaram por revisão editorial de clareza. A orientação sobre suspeita de infarto agora cita o SAMU 192; alternativas e explicações foram ajustadas, e o sorteio evita assuntos repetidos na mesma partida. Confira [a revisão detalhada](docs/revisao-questoes.md). Os registros já existentes no ranking não foram apagados. Para atualizar o PWA instalado no tablet, abra-o conectado à internet e recarregue a página.
 
 
 Quiz do PET Saúde para o tablet do estande, com **28 perguntas oficiais Sim/Não** e **12 perguntas complementares de múltipla escolha**, sobre LGPD e SUS.
+
+## Ajustes de acessibilidade para a feira — versão atual
+
+Após as orientações do professor, a interface passou a priorizar o **uso da área inteira do tablet**, inclusive em tela cheia do PWA:
+
+- Durante as perguntas, o topo e rodapé do site ficam ocultos e o cartão de jogo utiliza praticamente toda a largura e altura disponíveis.
+- A fonte das questões, das explicações e dos botões **Sim/Não** e **A–D** foi ampliada para facilitar a leitura, especialmente por pessoas idosas.
+- Foram removidos da tela de perguntas o relógio visível, a instrução redundante para selecionar respostas e a linha inferior com textos decorativos. O tempo continua sendo medido somente para a pontuação.
+- A **logo PET Saúde** fornecida na conversa foi convertida em **SVG vetorial** e reposicionada entre nome do participante e pontuação, sem ocultar nomes longos.
+- O título visível é **Quiz PET Saúde**, sem associação exclusiva a um único grupo. Na tela inicial, o rodapé reconhece a colaboração de Administração, Ciências Contábeis, Direito e Gestão da Tecnologia da Informação.
+- O **tema escuro é o padrão**, com opção **Tema claro** na parte superior da tela inicial. A escolha é salva no próprio aparelho. A economia de bateria depende do tipo de tela do tablet.
+- As **12 perguntas de múltipla escolha**, elaboradas para completar o formato do quiz, estão relacionadas em **[docs/perguntas-multipla-escolha.md](docs/perguntas-multipla-escolha.md)** com todas as alternativas, respostas e explicações para revisão da equipe.
+
+O uso do PWA continua disponível, e o quiz mantém ranking Firebase, respostas sem tempo limite e retorno automático em cinco segundos após o resultado.
+
+**Atualização em tablet já instalado:** abrir o PWA com conexão à internet, recarregar a página e conferir a versão; o service worker `pet-grupo6-feira-pwa-v10` armazena o novo CSS, o script de tema e a logo. Faça uma partida completa em modo claro/escuro e também com Wi-Fi desligado antes da feira.
 
 ## Regras do jogo
 - A cada partida: 2 LGPD + 5 SUS (Sim/Não), mais 1 LGPD + 2 SUS (A–D).
