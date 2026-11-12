@@ -1,86 +1,76 @@
 # Quiz do Grupo 6 — PET Saúde
 
-Quiz para uso em **um tablet no estande da feira**. O visitante informa seu primeiro nome ou apelido, responde e disputa as cinco melhores posições do ranking.
+Quiz para **um tablet no estande da feira**, com foco em **Privacidade e Proteção de Dados na Saúde (LGPD)** e **Conhecendo o SUS e os Serviços de Saúde**.
 
-## Fluxo do participante
+## Conteúdo do quiz
 
-1. A tela inicial mostra título, identidade visual, Top 5 e botão de início.
-2. O visitante informa seu nome/apelido.
-3. O programa sorteia **7 perguntas Sim/Não e 3 de múltipla escolha A–D** a cada partida. A ordem das questões é aleatória, assim como a ordem das alternativas A–D; os botões Sim e Não permanecem na mesma posição.
-4. Cada pergunta tem **15 segundos**; acertar rápido vale mais.
-5. Depois de cada resposta, aparece a resposta correta, uma justificativa de aproximadamente duas linhas e o botão de avançar. O cronômetro fica parado nessa explicação.
-6. Ao terminar, aparecem pontos, acertos, tempo e colocação.
-7. O botão **Próximo participante** limpa o nome para a próxima pessoa. Sem interação, o resultado retorna à tela inicial após **60 segundos**.
+- **28 perguntas oficiais Sim ou Não**, fornecidas pela equipe da feira:
+  - 8 do tema **LGPD**;
+  - 20 do tema **SUS**.
+- **12 perguntas complementares de múltipla escolha A–D**, elaboradas a partir dos mesmos temas:
+  - 4 sobre **LGPD**;
+  - 8 sobre **SUS**.
+- As perguntas complementares são **criadas para completar o formato** e devem receber revisão da organização antes do evento. As explicações das 28 oficiais foram mantidas conforme o texto enviado.
+- Perguntas e configurações estão em [questions.js](questions.js). O conteúdo pode ser alterado sem modificar o restante da interface.
 
-## Pontuação
+## Cada participante
 
-- **Acerto:** 100 pontos fixos + até 100 pontos de bônus proporcionais ao tempo restante.
-- **Erro/tempo esgotado:** 0 pontos.
-- **Máximo:** 2.000 pontos por partida.
-- **Desempate:** menor tempo acumulado de respostas.
-- Cada nome aparece com a melhor pontuação.
+1. Abre a tela inicial com a logo fornecida, o nome do quiz e o ranking Top 5.
+2. Toca em **Iniciar desafio** e informa nome/apelido.
+3. Recebe dez perguntas **sorteadas a cada partida**, com:
+   - **2 LGPD + 5 SUS**, todas de Sim/Não;
+   - **1 LGPD + 2 SUS**, todas de múltipla escolha A–D.
+4. As dez perguntas aparecem em **ordem aleatória**. Nas perguntas A–D, as alternativas também são embaralhadas; os botões Sim/Não ficam na posição habitual.
+5. Tem **15 segundos para responder cada pergunta**. O relógio é interrompido assim que responder.
+6. Depois de responder (ou esgotar o tempo), vê **a resposta correta e uma explicação breve**. Toca em **Próxima pergunta** para avançar.
+7. Ao terminar, recebe a pontuação, número de acertos, tempo gasto e colocação.
+8. **Próximo participante** limpa o nome e começa outro atendimento. Se não houver interação, a tela de resultados retorna à inicial em **60 segundos**.
 
-A dificuldade pode variar se as perguntas forem sorteadas de um banco de dificuldade desigual; idealmente, as perguntas oficiais devem ser equivalentes.
+### Pontuação
 
-## Banco de perguntas
+- Acerto = **100 pontos + bônus de até 100 pontos**, proporcional ao tempo restante.
+- Resposta errada ou fora do tempo = **zero**.
+- Máximo por partida = **2.000 pontos**.
+- Desempate: **menor tempo total de respostas**.
+- Ranking Top 5 mostra a melhor pontuação por **nome/apelido**. Para pessoas distintas com nome igual, recomende usar um apelido diferente.
 
-**As 24 perguntas deste protótipo são apenas exemplos:** 14 Sim/Não e 10 de alternativas A–D. NÃO são conteúdo oficial do Grupo 6.
+## Dados, ranking e funcionamento offline
 
-Para inserir as perguntas oficiais, edite o arquivo **questions.js**. Exemplo de item:
+O **ranking é armazenado apenas no próprio tablet** através de localStorage. Não há necessidade de Wi-Fi ou servidor de banco de dados durante a feira, depois que a página e seus arquivos forem baixados pela primeira vez.
 
-~~~javascript
-{
-  id: 'sn01',
-  type: 'boolean',
-  prompt: 'Enunciado da pergunta?',
-  options: ['Sim','Não'],
-  correctIndex: 0, // Sim=0; Não=1
-  explanation: 'Uma justificativa breve após responder.'
-}
-~~~
+O projeto possui integração **opcional** com Firestore para ranking entre aparelhos, porém ela está **desativada** enquanto `firebase-config.js` não estiver configurado. A competição local NÃO envia o nome do participante a um servidor de ranking. Como GitHub Pages é um site público, evite digitar dados pessoais sensíveis.
 
-Múltipla escolha usa type='multiple', quatro opções e correctIndex de 0 (A) a 3 (D). A justificativa deve ter aproximadamente duas linhas.
+**Cuidados na feira:** não use aba anônima; não limpe os dados do navegador; mantenha o mesmo tablet/perfil e, se possível, faça uma cópia do ranking antes de trocar de aparelho. A lógica de pontuação fica no navegador; para concursos com prêmios de alto valor, seria necessário verificar a pontuação no servidor.
 
-Quando as perguntas oficiais estiverem revisadas, altere isDemo para false e questionSetVersion para, por exemplo, feira-oficial-v1.
+## Publicar no GitHub Pages
 
-## Logo do evento
+1. Abra **Settings → Pages** no repositório.
+2. Em *Build and deployment*, selecione **Deploy from a branch**, a branch **main** e a pasta **/(root)**.
+3. Abra **https://99eliel.github.io/pet/** quando o GitHub Pages finalizar a publicação.
+4. Abra a página no tablet com internet **uma vez depois desta atualização** para carregar perguntas, CSS e logo novos.
+5. Depois disso, o serviço offline permite jogar sem internet, desde que o navegador mantenha o cache e o armazenamento.
+6. Recomenda-se usar **Adicionar à tela inicial** e o modo de fixação de tela do tablet para não deixar o participante sair do site.
 
-A interface procura a imagem original em **assets/logo-pet.png**. Quando esse arquivo existir, o site substitui a identidade temporária automaticamente. Essa imagem ainda precisa ser anexada ao repositório na forma PNG.
+O logotipo que a equipe enviou está em **assets/logo-pet.svg**. É uma versão otimizada da imagem fornecida, para carregamento leve.
 
-## Como publicar e usar no tablet
+## Arquivos principais
 
-1. Abra **Settings → Pages** no repositório do GitHub.
-2. Selecione **Deploy from a branch**, branch **main**, diretório **/(root)** e salve.
-3. Depois de publicado, acesse **https://99eliel.github.io/pet/**.
-4. Abra no tablet, com internet, até que a primeira carga seja concluída.
-5. A partir daí, o app pode funcionar **offline** por meio do service worker, desde que os dados do navegador sejam preservados.
-6. Se desejado, use no Chrome **Adicionar à tela inicial** e a opção de fixação de tela do sistema do tablet para manter a página visível.
+| Arquivo | Responsabilidade |
+|---|---|
+| `questions.js` | 40 questões (28 oficiais + 12 complementares), temas, sorteio, acertos e explicações |
+| `app.js` | Cronômetro, pontuação, perguntas, respostas e transições |
+| `scores.js` | Ranking e armazenamento persistente local |
+| `index.html` | Telas e elementos do quiz |
+| `styles.css` | Visual responsivo e controles grandes para tablet |
+| `assets/logo-pet.svg` | Logotipo fornecido pela organização |
+| `sw.js` | Cache para funcionamento offline |
+| `manifest.webmanifest` | Adicionar à tela inicial |
+| `firebase-config.js` | Configuração opcional de ranking multiaparelhos |
 
-Durante a feira: mantenha o tablet carregando, evite modo anônimo, não limpe os dados do site e teste a partida completa com Wi-Fi desligado antes de abrir o estande.
+## Revisão antes da feira
 
-## Ranking do tablet
-
-Por padrão, o Top 5 é salvo localmente no navegador do **mesmo tablet**, sem necessidade de internet ou banco de dados. O ranking é persistente enquanto o armazenamento do site não for apagado. A versão de demonstração usa armazenamento separado dos resultados oficiais.
-
-## Ranking online (opcional)
-
-A estrutura para Firestore está preparada em **scores.js** e **firebase-config.js**. Para um ranking compartilhado entre vários aparelhos é necessário:
-
-- Configurar aplicativo Web no Firebase e inserir a configuração em firebase-config.js.
-- Criar Cloud Firestore e publicar as regras do arquivo firestore.rules.
-- Habilitar Authentication com login anônimo e autorizar os domínios.
-- Publicar as perguntas oficiais e marcar isDemo como false.
-
-**Atenção:** uma competição com prêmio relevante deve validar pontuação e tempo no servidor para evitar falsificação, pois a lógica atual de pontuação é executada no navegador.
-
-## Arquivos
-
-- index.html — telas e componentes.
-- styles.css — interface e adaptação ao tablet.
-- app.js — temporizador, sorteio, jogo e resultados.
-- questions.js — perguntas, justificativas e regras.
-- scores.js — ranking local e online opcional.
-- firebase-config.js — configuração opcional do Firebase.
-- firestore.rules — regras do Firestore.
-- sw.js e manifest.webmanifest — funcionamento offline e modo aplicativo.
-- assets/favicon.svg — ícone temporário.
+- Validar as **12 questões complementares A–D** e as respectivas explicações com a organização.
+- Fazer partidas completas no tablet para confirmar tamanho dos textos e botões.
+- Verificar que o ranking abre vazio no aparelho do evento e resiste a fechar/reabrir o navegador.
+- Fazer o teste offline **com o Wi-Fi desligado**, após primeiro carregamento online.
+- Verificar que uma pessoa não consegue passar direto pela explicação sem ler involuntariamente.
