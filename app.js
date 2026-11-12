@@ -1,11 +1,13 @@
-import { questions, quizConfig, validateQuiz } from './questions.js';
+import { buildQuestionRound, quizConfig, validateQuiz } from './questions.js';
 import { startLeaderboard, rankEntries } from './scores.js';
 
 const $ = id => document.getElementById(id);
 const views = ['homeView', 'setupView', 'quizView', 'resultView'];
 const number = value => Number(value).toLocaleString('pt-BR');
 const durationMs = quizConfig.secondsPerQuestion * 1000;
-const maxScore = questions.length * (quizConfig.correctPoints + quizConfig.maxSpeedBonus);
+const roundSize = quizConfig.questionsPerRound.boolean + quizConfig.questionsPerRound.multiple;
+const maxScore = roundSize * (quizConfig.correctPoints + quizConfig.maxSpeedBonus);
+let questions = [];
 let leaderboardStore = null;
 let leaderboardPromise = null;
 let currentRanking = [];
@@ -18,6 +20,7 @@ let totalAnswerTimeMs = 0;
 let questionStartedAt = 0;
 let frameId = null;
 let transitionId = null;
+let resultTimeoutId = null;
 let questionLocked = true;
 
 function showView(viewName) {
@@ -81,16 +84,27 @@ function setRankingMode(mode) {
 
 function goHome() {
   clearQuestionTimers();
+  clearResultTimeout();
+  player = '';
   showView('homeView');
   leaderboardStore?.refresh();
 }
 
 function openSetup() {
   clearQuestionTimers();
+  clearResultTimeout();
+  player = '';
   showView('setupView');
   $('nameError').textContent = '';
-  $('playerName').value = player;
+  $('playerName').value = '';
   $('playerName').focus();
+}
+
+function clearResultTimeout() {
+  if (resultTimeoutId !== null) {
+    clearTimeout(resultTimeoutId);
+    resultTimeoutId = null;
+  }
 }
 
 function clearQuestionTimers() {
@@ -113,6 +127,7 @@ function beginQuiz() {
     return;
   }
   player = proposedName.slice(0, 28);
+  questions = buildQuestionRound();
   questionIndex = 0;
   totalScore = 0;
   correctAnswers = 0;
@@ -145,6 +160,9 @@ function renderQuestion() {
   $('questionTitle').textContent = question.prompt;
   $('answerFeedback').textContent = '';
   $('answerFeedback').classList.remove('bad');
+  $('explanationBox').hidden = true;
+  $('explanationText').textContent = '';
+  $('nextQuestion').hidden = true;
   buildProgress();
   const answers = $('answerGrid');
   answers.replaceChildren();
@@ -218,12 +236,20 @@ function answerQuestion(selectedIndex) {
       + ' Resposta certa: ' + question.options[question.correctIndex];
   }
 
-  transitionId = setTimeout(() => {
-    transitionId = null;
-    questionIndex += 1;
-    if (questionIndex < questions.length) renderQuestion();
-    else finishQuiz();
-  }, 1100);
+  // O participante lê a justificativa sem o relógio correndo.
+  $('explanationText').textContent = question.explanation;
+  $('explanationBox').hidden = false;
+  $('nextQuestion').textContent = questionIndex === questions.length - 1
+    ? 'Ver meu resultado →' : 'Próxima pergunta →';
+  $('nextQuestion').hidden = false;
+  $('nextQuestion').focus({ preventScroll: true });
+}
+
+function advanceAfterFeedback() {
+  if (!questionLocked || $('nextQuestion').hidden) return;
+  questionIndex += 1;
+  if (questionIndex < questions.length) renderQuestion();
+  else finishQuiz();
 }
 
 async function finishQuiz() {
@@ -236,6 +262,8 @@ async function finishQuiz() {
   $('totalTime').textContent = (totalAnswerTimeMs / 1000).toFixed(1).replace('.', ',') + 's';
   $('rankPosition').textContent = '—';
   $('saveMessage').textContent = 'Registrando sua pontuação...';
+  clearResultTimeout();
+  resultTimeoutId = setTimeout(goHome, quizConfig.resultResetSeconds * 1000);
 
   const record = {
     name: player,
@@ -286,6 +314,7 @@ function setupEventHandlers() {
   $('playerForm').addEventListener('submit', event => { event.preventDefault(); beginQuiz(); });
   $('playerName').addEventListener('input', () => { $('nameError').textContent = ''; });
   $('playAgain').addEventListener('click', openSetup);
+  $('nextQuestion').addEventListener('click', advanceAfterFeedback);
   $('backToHome').addEventListener('click', goHome);
   $('refreshRanking').addEventListener('click', () => leaderboardStore?.refresh());
 }
@@ -302,6 +331,8 @@ function initialize() {
   $('heroMaxScore').textContent = number(maxScore);
   $('maxResultScore').textContent = number(maxScore);
   $('demoNotice').hidden = !quizConfig.isDemo;
+  $('questionTotal').textContent = '/ ' + roundSize;
+  $('resultAutoReset').textContent = 'A tela volta ao início automaticamente após ' + quizConfig.resultResetSeconds + ' segundos.';
   $('currentYear').textContent = new Date().getFullYear();
   setupLogo();
   setupEventHandlers();
