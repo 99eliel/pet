@@ -336,6 +336,11 @@ function initialize() {
   $('currentYear').textContent = new Date().getFullYear();
   setupLogo();
   setupEventHandlers();
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    navigator.serviceWorker.register('./sw.js').catch(error => {
+      console.warn('Modo offline não disponível:', error);
+    });
+  }
   setRankingMode('local');
   leaderboardPromise = startLeaderboard({
     config: quizConfig,
