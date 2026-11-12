@@ -1,5 +1,5 @@
 /* Funcionamento offline no tablet depois da primeira abertura online. */
-const CACHE = 'pet-grupo6-feira-pwa-v10';
+const CACHE = 'pet-grupo6-feira-pwa-v11';
 const PREFIX = 'pet-grupo6-';
 const APP_FILES = [
   './', './index.html', './styles.css', './tablet.css', './theme.js', './app.js', './install.js',
