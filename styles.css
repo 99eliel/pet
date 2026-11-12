@@ -253,3 +253,48 @@ li:first-child .rank-number { background: #e0edb2; color: #536a27; }
   .answer-option { min-height: 62px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::after, *::before { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+
+
+/* Feira: leitura curta após a resposta, sem cronômetro correndo */
+.explanation-box {
+  padding: 15px 19px;
+  margin-top: 5px;
+  margin-bottom: 14px;
+  border: 1px solid #d7e9dc;
+  border-radius: 14px;
+  background: #f1f9f1;
+  text-align: left;
+}
+.explanation-label {
+  color: #37806a;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1.1px;
+  margin-bottom: 7px;
+}
+.explanation-box p {
+  color: #335b53;
+  line-height: 1.55;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+.next-question { width: 100%; min-height: 58px; justify-content: center; margin-top: 6px; font-size: 15px; }
+.next-question[hidden], .explanation-box[hidden] { display: none !important; }
+.auto-reset { color: #8aa098; font-size: 11px; margin: 0; }
+
+/* Tablet de feira: áreas de toque maiores e tipografia legível */
+@media (min-width: 700px) and (pointer: coarse) {
+  .btn { min-height: 60px; font-size: 16px; }
+  .btn-large { min-height: 68px; font-size: 17px; }
+  .answer-option { min-height: 105px; font-size: 18px; }
+  .answer-key { width: 43px; height: 43px; font-size: 16px; }
+  .question-title { font-size: clamp(30px, 3.5vw, 41px); }
+  .explanation-box p { font-size: 17px; }
+  .next-question { min-height: 66px; }
+}
+@media (max-width: 600px) {
+  .explanation-box { padding: 14px; }
+  .explanation-box p { font-size: 13px; }
+  .next-question { min-height: 58px; }
+}
