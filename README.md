@@ -1,5 +1,8 @@
 # Quiz do Grupo 6 — PET Saúde
 
+> **Revisão das perguntas (12/11/2026):** as 40 questões passaram por revisão editorial de clareza. A orientação sobre suspeita de infarto agora cita o SAMU 192; alternativas e explicações foram ajustadas, e o sorteio evita assuntos repetidos na mesma partida. Confira [a revisão detalhada](docs/revisao-questoes.md). Os registros já existentes no ranking não foram apagados. Para atualizar o PWA instalado no tablet, abra-o conectado à internet e recarregue a página.
+
+
 Quiz do PET Saúde para o tablet do estande, com **28 perguntas oficiais Sim/Não** e **12 perguntas complementares de múltipla escolha**, sobre LGPD e SUS.
 
 ## Regras do jogo
