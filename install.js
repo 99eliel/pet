@@ -9,6 +9,7 @@ const helpTitle = document.getElementById('installHelpTitle');
 const helpIntro = document.getElementById('installHelpIntro');
 const helpSteps = document.getElementById('installHelpSteps');
 const closeButton = document.getElementById('installHelpClose');
+const doneButton = document.getElementById('installHelpDone');
 const status = document.getElementById('installAppStatus');
 
 let installPrompt = null;
@@ -97,6 +98,10 @@ button?.addEventListener('click', async () => {
 });
 
 closeButton?.addEventListener('click', () => {
+  if (typeof dialog.close === 'function') dialog.close();
+  else dialog.removeAttribute('open');
+});
+doneButton?.addEventListener('click', () => {
   if (typeof dialog.close === 'function') dialog.close();
   else dialog.removeAttribute('open');
 });
