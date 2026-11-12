@@ -1,0 +1,19 @@
+{
+  "name": "Quiz do Grupo 6 do PET Saúde",
+  "short_name": "Quiz PET 6",
+  "description": "Quiz interativo do Grupo 6 do PET Saúde para o estande da feira.",
+  "lang": "pt-BR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#edf3f1",
+  "theme_color": "#123d43",
+  "icons": [
+    {
+      "src": "assets/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
