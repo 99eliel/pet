@@ -156,7 +156,7 @@ function renderQuestion() {
   questionLocked = false;
   $('questionCounter').textContent = 'PERGUNTA ' + String(questionIndex + 1).padStart(2, '0');
   $('questionTotal').textContent = '/ ' + questions.length;
-  $('questionType').textContent = question.type === 'boolean' ? 'SIM OU NÃO' : 'MÚLTIPLA ESCOLHA';
+  $('questionType').textContent = (question.theme === 'lgpd' ? 'LGPD' : 'SUS') + ' · ' + (question.type === 'boolean' ? 'SIM OU NÃO' : 'MÚLTIPLA ESCOLHA');
   $('questionTitle').textContent = question.prompt;
   $('answerFeedback').textContent = '';
   $('answerFeedback').classList.remove('bad');
