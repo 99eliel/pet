@@ -66,7 +66,9 @@ export function buildQuestionRound() {
     ...shuffled(questionBank.filter(q => q.type === 'multiple')).slice(0, quizConfig.questionsPerRound.multiple)
   ];
   return shuffled(selected.map(q => {
-    // Embaralha alternativas e preserva a resposta correta.
+    // Em Sim/Não, mantenha os botões na mesma posição para evitar confusão
+    // em respostas rápidas. Em A–D, sorteie a posição da alternativa correta.
+    if (q.type === 'boolean') return { ...q, options: [...q.options] };
     const answers = shuffled(q.options.map((label, originalIndex) => ({
       label, correct: originalIndex === q.correctIndex
     })));
