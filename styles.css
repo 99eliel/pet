@@ -317,3 +317,138 @@ li:first-child .rank-number { background: #e0edb2; color: #536a27; }
 @media (max-width: 600px) {
   .hero-logo img { height: 116px; max-height: 116px; padding: 5px; border-radius: 10px; }
 }
+
+
+/* PWA: botão de instalação sempre visível no navegador, oculto no app instalado */
+.hero-actions {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.hero-actions .btn-large {
+  width: min(285px, 100%);
+  flex: 1 1 230px;
+}
+.btn-install {
+  flex: 1 1 170px;
+  min-height: 55px;
+  border: 1px solid rgba(218, 245, 196, .45);
+  color: #f6ffec;
+  background: rgba(178, 225, 159, .09);
+  white-space: nowrap;
+  font-size: 13px;
+  padding: 10px 16px;
+  gap: 9px;
+}
+.btn-install:hover:not(:disabled) {
+  background: rgba(178, 225, 159, .18);
+  border-color: #d9f48a;
+}
+.install-button-icon {
+  font-size: 21px;
+  line-height: 1;
+  font-weight: 800;
+  color: #d9f48a;
+}
+#installAppButton[hidden] { display: none !important; }
+.install-status {
+  min-height: 0;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #cfeab4;
+}
+.install-status:not(:empty) { margin-top: 9px; }
+
+/* Instruções de instalação quando o navegador não oferece prompt automático */
+.install-dialog {
+  width: min(92vw, 480px);
+  max-height: 90dvh;
+  overflow-y: auto;
+  margin: auto;
+  padding: 28px;
+  border-radius: 22px;
+  border: 1px solid #dbe8e0;
+  background: #ffffff;
+  color: #214a4b;
+  box-shadow: 0 24px 90px rgba(8, 40, 41, .28);
+}
+.install-dialog::backdrop {
+  background: rgba(9, 33, 37, .64);
+  backdrop-filter: blur(3px);
+}
+.install-dialog-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.install-dialog-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  font-weight: 800;
+  color: #2a6c58;
+  background: #e4f5d3;
+}
+.install-dialog-close {
+  width: 39px;
+  height: 39px;
+  border: 0;
+  border-radius: 50%;
+  background: #f0f5f1;
+  color: #466962;
+  font-weight: 800;
+  font-size: 16px;
+}
+.install-dialog h2 {
+  font-family: Outfit, sans-serif;
+  font-size: 27px;
+  letter-spacing: -.7px;
+  margin: 0 0 9px;
+  color: #143d44;
+}
+.install-dialog p { margin: 0; font-size: 14px; line-height: 1.65; color: #69817b; }
+.install-dialog ol {
+  counter-reset: list;
+  display: grid;
+  gap: 13px;
+  padding-left: 23px;
+  margin: 23px 0;
+}
+.install-dialog li {
+  padding-left: 5px;
+  color: #365f5a;
+  font-size: 14px;
+  line-height: 1.65;
+  font-weight: 600;
+}
+.install-dialog li::marker { color: #468876; font-weight: 900; }
+.install-dialog .install-dialog-foot {
+  background: #f3f9ed;
+  padding: 14px;
+  border-radius: 11px;
+  color: #52735b;
+  font-size: 12px;
+}
+.install-dialog-done { width: 100%; min-height: 52px; margin-top: 20px; }
+
+@media (max-width: 600px) {
+  .hero-actions { flex-direction: column; }
+  .hero-actions .btn,
+  .hero-actions .btn-large {
+    width: 100%;
+    min-height: 54px;
+    flex: none;
+  }
+  .install-dialog { padding: 22px; }
+}
+@media (min-width: 700px) and (pointer: coarse) {
+  .btn-install { min-height: 68px; font-size: 16px; }
+  .install-dialog li { font-size: 17px; }
+  .install-dialog-done { min-height: 62px; font-size: 17px; }
+}
