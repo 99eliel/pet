@@ -252,3 +252,7 @@ html[data-theme="dark"] .rank-score small {color:#9db8af}
   body.answer-revealed .answer-option {min-height:70px}
   .next-question {min-height:55px}
 }
+
+/* Símbolo PET Saúde enviado em .ico, adaptado para favicon vetorial. */
+.brand-icon img { width: 100%; height: 100%; transform: none; object-fit: contain; padding: 3px; }
+@media (max-width: 600px) { .brand-icon img { width: 100%; height: 100%; } }
