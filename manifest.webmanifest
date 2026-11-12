@@ -1,19 +1,33 @@
 {
+  "id": "./",
   "name": "Quiz do Grupo 6 do PET Saúde",
   "short_name": "Quiz PET 6",
-  "description": "Quiz interativo do Grupo 6 do PET Saúde para o estande da feira.",
+  "description": "Quiz interativo sobre LGPD e SUS do Grupo 6 do PET Saúde.",
   "lang": "pt-BR",
+  "dir": "ltr",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#edf3f1",
   "theme_color": "#123d43",
+  "categories": [
+    "education",
+    "health",
+    "games"
+  ],
   "icons": [
     {
-      "src": "assets/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "./assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "./assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
