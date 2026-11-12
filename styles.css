@@ -298,3 +298,22 @@ li:first-child .rank-number { background: #e0edb2; color: #536a27; }
   .explanation-box p { font-size: 13px; }
   .next-question { min-height: 58px; }
 }
+
+
+/* Imagem original do PET Saúde enviada pela organização. A foto tem fundo
+   claro; apresentação sobre placa branca para manter a marca legível. */
+.hero-logo img {
+  width: auto;
+  height: 136px;
+  max-height: 136px;
+  max-width: min(280px, 100%);
+  background: #ffffff;
+  object-fit: contain;
+  object-position: center;
+  border-radius: 13px;
+  padding: 7px;
+  box-shadow: 0 10px 30px rgba(3, 30, 32, .13);
+}
+@media (max-width: 600px) {
+  .hero-logo img { height: 116px; max-height: 116px; padding: 5px; border-radius: 10px; }
+}
