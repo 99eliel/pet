@@ -1,19 +1,21 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#113b42">
-  <meta name="description" content="Quiz do Grupo 6 do PET Saúde: dez perguntas aleatórias e ranking por pontos.">
-  <title>Quiz do Grupo 6 | PET Saúde</title>
+  <meta name="theme-color" content="#091b22">
+  <meta name="description" content="Quiz PET Saúde: perguntas sobre LGPD e SUS, com ranking por pontos.">
+  <title>Quiz PET Saúde | Raízes Digitais</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="assets/icon-192.png" type="image/png" sizes="192x192">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Quiz PET 6">
+  <meta name="apple-mobile-web-app-title" content="Quiz PET Saúde">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="tablet.css">
+  <script defer src="theme.js"></script>
   <script type="module" src="app.js"></script>
   <script type="module" src="install.js"></script>
 </head>
@@ -22,13 +24,13 @@
   <div class="ambient ambient-two" aria-hidden="true"></div>
   <header class="site-header">
     <div class="container header-inner">
-      <a class="brand" href="./" aria-label="Quiz do Grupo 6, voltar à página inicial">
-        <span class="brand-icon" aria-hidden="true">
-          <svg viewBox="0 0 48 48" fill="none"><path d="M24 8v32M8 24h32" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><circle cx="24" cy="24" r="5" fill="#DBF28B"/></svg>
-        </span>
-        <span class="brand-copy"><strong>PET Saúde</strong><small>GRUPO 06</small></span>
+      <a class="brand" href="./" aria-label="Quiz PET Saúde — início">
+        <span class="brand-icon" aria-hidden="true"><img src="assets/logo-pet-vetorial.svg" alt=""></span>
+        <span class="brand-copy"><strong>PET Saúde</strong><small>RAÍZES DIGITAIS</small></span>
       </a>
-      <div class="header-label"><span class="live-dot" aria-hidden="true"></span> Quiz interativo</div>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Ativar tema claro" title="Alternar tema claro e escuro">
+        <span aria-hidden="true" id="themeToggleIcon">☀</span><span id="themeToggleLabel">Tema claro</span>
+      </button>
     </div>
   </header>
 
@@ -39,15 +41,15 @@
           <div class="hero-glow" aria-hidden="true"></div>
           <div class="hero-main">
             <div class="eyebrow"><span class="eyebrow-line"></span> APRENDA • PARTICIPE • DESAFIE-SE</div>
-            <div class="hero-logo" aria-label="Identidade PET Saúde, Grupo 6">
-              <img src="assets/logo-pet.svg" alt="Logotipo do Grupo 6 do PET Saúde" id="uploadedLogo" hidden>
+            <div class="hero-logo" aria-label="Identidade PET Saúde — Raízes Digitais">
+              <img src="assets/logo-pet-vetorial.svg" alt="Logotipo PET Saúde — Raízes Digitais: do Cerrado à Nuvem" id="uploadedLogo" hidden>
               <div class="illustrated-logo" id="fallbackLogo" aria-hidden="true">
                 <div class="pet-mark"><i></i><i></i><i></i><i></i><i></i><i></i><span>+</span></div>
-                <div class="pet-wordmark"><strong>PET<span>SAÚDE</span></strong><small>GRUPO 6</small></div>
+                <div class="pet-wordmark"><strong>PET<span>SAÚDE</span></strong><small>RAÍZES DIGITAIS</small></div>
               </div>
             </div>
-            <h1 id="homeTitle">Quiz do <span>Grupo 6</span><br>do PET Saúde<span class="title-period">.</span></h1>
-            <p class="hero-description">Aprenda sobre privacidade de dados e os serviços do SUS. Responda perguntas sorteadas, acerte rápido e conquiste seu lugar no ranking!</p>
+            <h1 id="homeTitle">Quiz <span>PET Saúde</span><span class="title-period">.</span></h1>
+            <p class="hero-description">Aprenda sobre proteção de dados e os serviços do SUS. Responda e conquiste seu lugar no ranking!</p>
             <div class="hero-metrics" aria-label="Informações do quiz">
               <div class="metric"><span class="metric-symbol">▦</span><div><strong>10</strong><small>Perguntas</small></div></div>
               <div class="metric-divider"></div>
@@ -115,8 +117,9 @@
     <section class="view" id="quizView" aria-labelledby="questionTitle" hidden>
       <div class="quiz-wrap">
         <div class="quiz-meta">
-          <div class="quiz-player"><span class="avatar-icon" aria-hidden="true">★</span><div><small>PARTICIPANTE</small><strong id="currentPlayer">Participante</strong></div></div>
-          <div class="quiz-points"><span>SEUS PONTOS</span><strong id="runningScore">0</strong></div>
+          <div class="quiz-player"><span class="avatar-icon" aria-hidden="true">★</span><div class="quiz-player-name"><small>PARTICIPANTE</small><strong id="currentPlayer">Participante</strong></div></div>
+          <div class="quiz-brand" title="PET Saúde — Raízes Digitais"><img src="assets/logo-pet-vetorial.svg" alt="PET Saúde"></div>
+          <div class="quiz-points"><span>PONTOS</span><strong id="runningScore">0</strong></div>
         </div>
         <div class="quiz-panel panel">
           <div class="quiz-topline">
@@ -124,9 +127,9 @@
             <div class="question-type" id="questionType">SIM OU NÃO</div>
           </div>
           <div class="progress-segments" id="questionProgress" aria-label="Progresso do questionário"></div>
-          <div class="timer-area" aria-live="off"><div class="timer-info"><span>⏱ Tempo de resposta · sem limite</span><span class="timer-number" id="timerNumber">0,0s</span></div></div>
+          
           <h1 id="questionTitle" class="question-title">Pergunta</h1>
-          <p class="question-hint">Selecione uma resposta para continuar.</p>
+          
           <div class="answer-grid" id="answerGrid" role="group" aria-label="Alternativas de resposta"></div>
           <div class="feedback" id="answerFeedback" role="status" aria-live="polite"></div>
           <div class="explanation-box" id="explanationBox" hidden>
@@ -134,7 +137,7 @@
             <p id="explanationText"></p>
           </div>
           <button class="btn btn-primary next-question" id="nextQuestion" type="button" hidden>Próxima pergunta →</button>
-          <div class="quiz-bottom"><span id="quizQuestionMark">GRUPO 06 / PET SAÚDE</span><span>⚡ Quanto mais rápido, mais pontos</span></div>
+          
         </div>
       </div>
     </section>
@@ -146,7 +149,7 @@
           <div class="result-medal" aria-hidden="true">🏅</div>
           <div class="eyebrow stage-eyebrow">DESAFIO CONCLUÍDO</div>
           <h1 id="resultTitle">Mandou bem, <span id="resultName">participante</span>!</h1>
-          <p class="result-copy">Você terminou o quiz do Grupo 6 do PET Saúde.</p>
+          <p class="result-copy">Você concluiu o quiz PET Saúde.</p>
           <div class="score-result"><div>SUA PONTUAÇÃO</div><strong id="finalScore">0</strong><small>de <span id="maxResultScore">2.000</span> pontos possíveis</small></div>
           <div class="result-stats"><div><strong id="correctCount">0/10</strong><small>Acertos</small></div><div><strong id="totalTime">0s</strong><small>Tempo total</small></div><div><strong id="rankPosition">—</strong><small>Colocação</small></div></div>
           <p class="save-message" id="saveMessage" role="status" aria-live="polite"></p>
@@ -167,6 +170,6 @@
     <p class="install-dialog-foot">Depois de instalado, o quiz abre como um aplicativo, sem precisar acessar o navegador. O jogo funciona offline após ser carregado com internet.</p>
     <button class="btn btn-primary install-dialog-done" id="installHelpDone" type="button">Entendi</button>
   </dialog>
-  <footer class="site-footer container"><span>© <span id="currentYear"></span> • Grupo 6 · PET Saúde</span><span>Conhecimento que transforma.</span></footer>
+  <footer class="site-footer container"><span>© <span id="currentYear"></span> • PET Saúde</span><span>Administração · Ciências Contábeis · Direito · Gestão de TI</span></footer>
 </body>
 </html>
