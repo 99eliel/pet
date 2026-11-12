@@ -9,7 +9,6 @@ import { firebaseConfig } from './firebase-config.js';
  */
 const LOCAL_KEY = 'pet-grupo6-ranking-local-v2';
 const PENDING_KEY = 'pet-grupo6-ranking-pending-v2';
-const LEGACY_KEY = 'pet-grupo6-ranking-v1';
 const COLLECTION = 'pet_grupo6_ranking';
 
 const normalizeName = name => String(name || '').trim().replace(/\s+/g, ' ').slice(0, 28);
@@ -76,12 +75,6 @@ export function startLeaderboard({ config, onChange, onMode }) {
   let connectionAttempt = null;
   let lastServerSnapshot = false;
 
-  // Resultados do ranking local usado nas primeiras versões, preservados
-  // como backup. Não reenviamos pontuações antigas sem um ID de partida.
-  const old = readArray(LEGACY_KEY);
-  const localOnlyLegacy = old.filter(e => !local.some(row =>
-    row.name === e.name && row.score === e.score && row.elapsedMs === e.elapsedMs));
-
   const status = () => {
     if (!hasConfig) return 'local';
     if (!remoteReady || !authReady) return lastError ? 'erro' : 'conectando';
@@ -90,7 +83,7 @@ export function startLeaderboard({ config, onChange, onMode }) {
   };
 
   const emit = () => {
-    const combined = rankEntries([...remote, ...local, ...localOnlyLegacy]);
+    const combined = rankEntries([...remote, ...local]);
     onMode(status(), pending.length);
     onChange(combined, status());
   };
@@ -225,7 +218,7 @@ export function startLeaderboard({ config, onChange, onMode }) {
     emit();
   });
   window.addEventListener('storage', event => {
-    if (![LOCAL_KEY, PENDING_KEY, LEGACY_KEY].includes(event.key)) return;
+    if (![LOCAL_KEY, PENDING_KEY].includes(event.key)) return;
     local = readArray(LOCAL_KEY);
     pending = readArray(PENDING_KEY);
     emit();
