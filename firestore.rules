@@ -1,39 +1,52 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /pet_grupo6_ranking/{scoreId} {
-      // O ranking pode ser lido publicamente com uma consulta limitada.
-      allow get: if true;
-      allow list: if request.query.limit != null && request.query.limit <= 100;
 
-      // Aceita apenas novos resultados com campos esperados.
-      // Ainda NÃO impede falsificação de pontuação via console do navegador.
+    // O quiz usa apenas esta coleção; nenhum outro dado tem acesso liberado.
+    match /pet_grupo6_ranking/{scoreId} {
+
+      // O Top 5 é público: mostrar apenas nome/apelido e pontuação.
+      // A consulta do site solicita no máximo 100 registros.
+      allow list: if request.query.limit != null && request.query.limit <= 100;
+      allow get: if false;
+
+      // Criação autenticada de um resultado por ID único.
+      // Esta regra valida estrutura e valores, mas NÃO prova que o
+      // participante respondeu honestamente. Para premiações de valor,
+      // validação de perguntas e relógio deve ocorrer no servidor.
       allow create: if request.auth != null
+        && scoreId.size() >= 15
+        && scoreId.size() <= 80
         && request.resource.data.keys().hasOnly([
           'name', 'score', 'correct', 'total', 'elapsedMs',
-          'questionSet', 'createdAt'
+          'questionSet', 'submittedBy', 'createdAt'
         ])
         && request.resource.data.keys().hasAll([
           'name', 'score', 'correct', 'total', 'elapsedMs',
-          'questionSet', 'createdAt'
+          'questionSet', 'submittedBy', 'createdAt'
         ])
+        && request.resource.data.submittedBy == request.auth.uid
         && request.resource.data.name is string
         && request.resource.data.name.size() >= 2
         && request.resource.data.name.size() <= 28
         && request.resource.data.score is int
-        && request.resource.data.score >= 0
-        && request.resource.data.score <= 2000
         && request.resource.data.correct is int
+        && request.resource.data.total == 10
         && request.resource.data.correct >= 0
         && request.resource.data.correct <= 10
-        && request.resource.data.total == 10
+        && request.resource.data.score >= request.resource.data.correct * 100
+        && request.resource.data.score <= request.resource.data.correct * 200
         && request.resource.data.elapsedMs is int
         && request.resource.data.elapsedMs >= 0
-        && request.resource.data.elapsedMs <= 150000
+        && request.resource.data.elapsedMs <= 2147483647
         && request.resource.data.questionSet is string
-        && request.resource.data.questionSet.size() <= 40
+        && request.resource.data.questionSet.size() >= 1
+        && request.resource.data.questionSet.size() <= 80
+        && request.resource.data.createdAt is timestamp
         && request.resource.data.createdAt == request.time;
 
+      // O público não pode alterar nem excluir um resultado do ranking.
       allow update, delete: if false;
     }
   }
