@@ -1,76 +1,78 @@
 # Quiz do Grupo 6 — PET Saúde
 
-Quiz para **um tablet no estande da feira**, com foco em **Privacidade e Proteção de Dados na Saúde (LGPD)** e **Conhecendo o SUS e os Serviços de Saúde**.
+Quiz do PET Saúde para o tablet do estande, com **28 perguntas oficiais Sim/Não** e **12 perguntas complementares de múltipla escolha**, sobre LGPD e SUS.
 
-## Conteúdo do quiz
+## Regras do jogo
+- A cada partida: 2 LGPD + 5 SUS (Sim/Não), mais 1 LGPD + 2 SUS (A–D).
+- Ordem das questões e alternativas A–D é aleatória.
+- **Não existe limite de tempo por pergunta.** O relógio conta apenas para definir o bônus de rapidez.
+- Cada acerto vale **100 pontos + até 100 pontos de bônus**. O bônus diminui gradualmente, mas a pergunta nunca expira.
+- Erros valem zero. Depois de cada resposta, o visitante lê uma explicação curta e toca para avançar.
+- O resultado aparece por **5 segundos** antes de voltar automaticamente à tela inicial.
+- Ranking Top 5 por pontuação; quando o nome se repete, a melhor partida é exibida.
 
-- **28 perguntas oficiais Sim ou Não**, fornecidas pela equipe da feira:
-  - 8 do tema **LGPD**;
-  - 20 do tema **SUS**.
-- **12 perguntas complementares de múltipla escolha A–D**, elaboradas a partir dos mesmos temas:
-  - 4 sobre **LGPD**;
-  - 8 sobre **SUS**.
-- As perguntas complementares são **criadas para completar o formato** e devem receber revisão da organização antes do evento. As explicações das 28 oficiais foram mantidas conforme o texto enviado.
-- Perguntas e configurações estão em [questions.js](questions.js). O conteúdo pode ser alterado sem modificar o restante da interface.
+## Firebase configurado
+Projeto Firebase da organização: **petsaude6**.
 
-## Cada participante
+- Hospedagem continua no **GitHub Pages**.
+- Coleção de resultados Firestore: `pet_grupo6_ranking`.
+- O aplicativo usa **Firebase Authentication anônimo**, sem exigir login do visitante.
+- Ranking em tempo real, compartilhado entre os dispositivos conectados.
+- Cada pontuação é salva imediatamente no tablet. Se a rede cair, uma fila local tenta enviar os registros ao Firebase quando a conexão volta.
+- A tela informa se está conectada, sincronizando, offline ou com erro.
+- Pontuações de versões antigas **não são importadas automaticamente** para o ranking oficial, evitando misturar testes.
 
-1. Abre a tela inicial com a logo fornecida, o nome do quiz e o ranking Top 5.
-2. Toca em **Iniciar desafio** e informa nome/apelido.
-3. Recebe dez perguntas **sorteadas a cada partida**, com:
-   - **2 LGPD + 5 SUS**, todas de Sim/Não;
-   - **1 LGPD + 2 SUS**, todas de múltipla escolha A–D.
-4. As dez perguntas aparecem em **ordem aleatória**. Nas perguntas A–D, as alternativas também são embaralhadas; os botões Sim/Não ficam na posição habitual.
-5. Pode responder **sem limite de tempo**: o cronômetro conta para cima, mas nunca encerra a pergunta. Ele é interrompido assim que a pessoa responde.
-6. Depois de responder (ou esgotar o tempo), vê **a resposta correta e uma explicação breve**. Toca em **Próxima pergunta** para avançar.
-7. Ao terminar, recebe a pontuação, número de acertos, tempo gasto e colocação.
-8. **Próximo participante** limpa o nome e começa outro atendimento. Se não houver interação, a tela de resultados retorna à inicial em **5 segundos**.
+A configuração do SDK está em `firebase-config.js`. A chave da configuração Web **não é uma chave administrativa**: a proteção depende das regras do Firestore e Authentication.
 
-### Pontuação
+### Passos obrigatórios no Console Firebase
+**Adicionar a configuração web no GitHub NÃO cria um banco nem publica as regras automaticamente.** É necessário:
 
-- Acerto = **100 pontos + bônus de até 100 pontos** que diminui suavemente com o tempo da resposta. Mesmo demorando, o participante pode responder e receber os 100 pontos fixos.
-- Resposta errada = **zero**. Não existe tempo esgotado.
-- Máximo por partida = **2.000 pontos**.
-- Desempate: **menor tempo total de respostas**.
-- Ranking Top 5 mostra a melhor pontuação por **nome/apelido**. Para pessoas distintas com nome igual, recomende usar um apelido diferente.
+1. Abrir o projeto: https://console.firebase.google.com/project/petsaude6/overview
+2. Em **Build → Firestore Database**, selecionar **Create database** se ainda não existir. Escolher uma região adequada e inicializar com regras bloqueadas (modo de produção).
+3. Em **Build → Authentication → Sign-in method**, habilitar **Anonymous (Anônimo)**.
+4. Em **Firestore Database → Rules**, substituir o conteúdo pelas regras de `firestore.rules` do repositório e clicar em **Publish**.
+5. Em **Authentication → Settings → Authorized domains**, conferir `99eliel.github.io` caso o seu método de login exija autorização de domínio.
+6. Abrir o site https://99eliel.github.io/pet/ no tablet com internet e recarregar.
+7. Confirmar na tela a mensagem **Firebase conectado**, completar uma partida e verificar que um documento foi criado na coleção `pet_grupo6_ranking` do Firestore.
+8. Abrir a página em outro navegador/aparelho e confirmar que o Top 5 é compartilhado.
+9. Testar offline: desativar Wi-Fi, responder, reativar Wi-Fi e conferir a sincronização.
 
-## Dados, ranking e funcionamento offline
+Se aparecer “Firebase indisponível” ou “Conectando” sem finalizar, confira o projeto, Authentication anônimo, Firestore, regras e rede. O quiz continuará jogável e os novos resultados ficarão guardados localmente.
 
-O **ranking é armazenado apenas no próprio tablet** através de localStorage. Não há necessidade de Wi-Fi ou servidor de banco de dados durante a feira, depois que a página e seus arquivos forem baixados pela primeira vez.
+### Alternativa: publicar regras pelo Firebase CLI
+Os arquivos `.firebaserc` e `firebase.json` já apontam para o projeto e para as regras. No terminal local dentro do repositório:
 
-O projeto possui integração **opcional** com Firestore para ranking entre aparelhos, porém ela está **desativada** enquanto `firebase-config.js` não estiver configurado. A competição local NÃO envia o nome do participante a um servidor de ranking. Como GitHub Pages é um site público, evite digitar dados pessoais sensíveis.
+```bash
+npm install -g firebase-tools
+firebase login
+firebase deploy --only firestore:rules --project petsaude6
+```
 
-**Cuidados na feira:** não use aba anônima; não limpe os dados do navegador; mantenha o mesmo tablet/perfil e, se possível, faça uma cópia do ranking antes de trocar de aparelho. A lógica de pontuação fica no navegador; para concursos com prêmios de alto valor, seria necessário verificar a pontuação no servidor.
+**Cuidado:** esse comando substitui as regras do Firestore desse projeto. Confira se não há outros sistemas usando o mesmo banco. Não é necessário publicar a hospedagem no Firebase.
 
-## Publicar no GitHub Pages
+### Segurança e privacidade
+- As regras limitam consultas e exigem autenticação anônima, UID correspondente, campos esperados, pontuação coerente e data de criação do servidor.
+- O site público mostra **nome/apelido e pontos**. Oriente a usar apelidos, não dados de saúde, CPF ou telefones.
+- A pontuação é calculada no navegador. **Não é possível impedir fraude deliberada apenas com essas regras.** Uma competição com premiação importante precisaria validar perguntas, respostas e tempo no servidor.
+- Analytics **não está inicializado**: ele é opcional e não é necessário para o ranking, mesmo com `measurementId` na configuração.
 
-1. Abra **Settings → Pages** no repositório.
-2. Em *Build and deployment*, selecione **Deploy from a branch**, a branch **main** e a pasta **/(root)**.
-3. Abra **https://99eliel.github.io/pet/** quando o GitHub Pages finalizar a publicação.
-4. Abra a página no tablet com internet **uma vez depois desta atualização** para carregar perguntas, CSS e logo novos.
-5. Depois disso, o serviço offline permite jogar sem internet, desde que o navegador mantenha o cache e o armazenamento.
-6. Recomenda-se usar **Adicionar à tela inicial** e o modo de fixação de tela do tablet para não deixar o participante sair do site.
+### Uso offline
+Abra a página com internet uma vez após a atualização e mantenha os arquivos do site em cache. Se a internet cair, o jogo funciona e a pontuação fica guardada no tablet até reconectar. Não use modo anônimo nem limpe dados do site. Teste o modo offline antes da feira. O sistema operacional pode apagar dados/cache em certas condições; sincronizar com o Firestore é mais seguro.
 
-O logotipo que a equipe enviou está em **assets/logo-pet.svg**. É uma versão otimizada da imagem fornecida, para carregamento leve.
+### GitHub Pages
+Para publicar, abra **Settings → Pages → Deploy from a branch → main → /(root)**.
+Site previsto: https://99eliel.github.io/pet/
 
-## Arquivos principais
-
-| Arquivo | Responsabilidade |
+## Arquivos
+| Arquivo | Uso |
 |---|---|
-| `questions.js` | 40 questões (28 oficiais + 12 complementares), temas, sorteio, acertos e explicações |
-| `app.js` | Cronômetro, pontuação, perguntas, respostas e transições |
-| `scores.js` | Ranking e armazenamento persistente local |
-| `index.html` | Telas e elementos do quiz |
-| `styles.css` | Visual responsivo e controles grandes para tablet |
-| `assets/logo-pet.svg` | Logotipo fornecido pela organização |
-| `sw.js` | Cache para funcionamento offline |
-| `manifest.webmanifest` | Adicionar à tela inicial |
-| `firebase-config.js` | Configuração opcional de ranking multiaparelhos |
-
-## Revisão antes da feira
-
-- Validar as **12 questões complementares A–D** e as respectivas explicações com a organização.
-- Fazer partidas completas no tablet para confirmar tamanho dos textos e botões.
-- Verificar que o ranking abre vazio no aparelho do evento e resiste a fechar/reabrir o navegador.
-- Fazer o teste offline **com o Wi-Fi desligado**, após primeiro carregamento online.
-- Verificar as explicações após cada resposta e que o resultado aparece por cinco segundos antes do retorno ao início.
+| `index.html` | Telas do jogo |
+| `styles.css` | Interface responsiva/tablet |
+| `questions.js` | 40 questões, temas e configuração |
+| `app.js` | Sorteio, tempo livre, pontos, resultado |
+| `scores.js` | Ranking Firebase com backup local |
+| `firebase-config.js` | Configuração web do Firebase petsaude6 |
+| `firestore.rules` | Regras a publicar no Firebase |
+| `firebase.json`, `.firebaserc` | Configuração para Firebase CLI |
+| `sw.js` | Suporte offline |
+| `assets/logo-pet.svg` | Logo original do PET Saúde |
