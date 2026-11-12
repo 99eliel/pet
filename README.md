@@ -5,7 +5,7 @@
 
 Quiz do PET Saúde para o tablet do estande, com **28 perguntas oficiais Sim/Não** e **12 perguntas complementares de múltipla escolha**, sobre LGPD e SUS.
 
-## Ajustes de acessibilidade para a feira — versão atual
+**Ícone PET Saúde:** o arquivo `.ico` disponibilizado pela equipe também foi incorporado à identidade do aplicativo, com uma versão vetorial do símbolo em `assets/favicon.svg`. Ele é usado na aba do navegador, no cabeçalho e como opção de ícone escalável no manifesto PWA. A marca completa permanece no quiz e os ícones PNG anteriores continuam disponíveis para compatibilidade com Android/iOS.\n\n## Ajustes de acessibilidade para a feira — versão atual
 
 Após as orientações do professor, a interface passou a priorizar o **uso da área inteira do tablet**, inclusive em tela cheia do PWA:
 
