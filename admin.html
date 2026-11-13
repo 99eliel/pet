@@ -87,24 +87,26 @@
           <div><small>RESPOSTAS ANALISADAS</small><strong id="metricResponses">—</strong></div>
           <div><small>TAXA DE ACERTO</small><strong id="metricAccuracy">—</strong></div>
           <div><small>TAXA DE ERRO</small><strong id="metricError">—</strong></div>
+          <div><small>IDADE MÉDIA</small><strong id="metricAverageAge">—</strong><small id="metricAgeCoverage">Aguardando dados de idade</small></div>
         </div>
         <div class="theme-metrics">
           <div><span>LGPD · TAXA DE ERRO</span><strong id="themeLgpd">—</strong><div class="metric-bar"><i id="barLgpd"></i></div><small id="detailLgpd">Aguardando respostas</small></div>
           <div><span>SUS · TAXA DE ERRO</span><strong id="themeSus">—</strong><div class="metric-bar"><i id="barSus"></i></div><small id="detailSus">Aguardando respostas</small></div>
         </div>
         <div class="report-section-title">
-          <div><h3>Questões com maiores taxas de erro</h3><p>Ordenadas pelo percentual de erro. A quantidade de respostas aparece ao lado para contextualizar cada resultado.</p></div>
+          <div><h3>Questões com maiores taxas de erro</h3><p>Ordenadas pelo percentual de erro, mostrando também a idade média de quem errou cada questão.</p></div>
         </div>
         <div class="admin-table-wrap">
           <table class="admin-table">
-            <thead><tr><th>Questão</th><th>Tema</th><th>Respostas</th><th>Erros</th><th>Acertos</th><th>Taxa de erro</th></tr></thead>
-            <tbody id="questionRows"><tr><td colspan="6" class="table-empty">Entre para gerar o relatório.</td></tr></tbody>
+            <thead><tr><th>Questão</th><th>Tema</th><th>Respostas</th><th>Erros</th><th>Acertos</th><th>Taxa de erro</th><th>Idade média de quem errou</th></tr></thead>
+            <tbody id="questionRows"><tr><td colspan="7" class="table-empty">Entre para gerar o relatório.</td></tr></tbody>
           </table>
         </div>
         <div class="report-methodology">
           <strong>Como interpretar</strong>
           <p>Taxa de erro = respostas incorretas ÷ respostas recebidas naquela pergunta × 100. Como as perguntas são sorteadas, cada uma pode ter quantidades diferentes de respostas.</p>
           <p>Os dados representam <strong>partidas realizadas no estande</strong>, não uma amostra estatisticamente representativa da população. Uma pessoa pode participar mais de uma vez.</p>
+          <p>A idade média considera somente as partidas com idade informada. Os registros antigos sem idade são excluídos desse cálculo; uma pessoa pode jogar mais de uma vez.</p>
           <p>Partidas anteriores à implantação do registro por pergunta não podem ser reconstruídas a partir do ranking antigo. Resultados ainda não sincronizados do tablet não aparecem no relatório online.</p>
         </div>
       </section>
