@@ -6,9 +6,17 @@ Este documento descreve a nova interface disponível em:
 
 Na tela inicial do quiz, na seção do Top 5, aparecem os botões **Gerar relatório** e **Zerar placar**. Os dois exigem autenticação administrativa.
 
+## Ajuste: participação pelo celular e idade voluntária
+
+O cadastro exige somente **nome/apelido**. A **idade é opcional**; quando preenchida, o tablet abre teclado numérico e valida de 1 a 120 anos. Participantes que não informam idade continuam participando normalmente e têm todos os erros contabilizados no relatório.
+
+A tela inicial possui o botão **Responder pelo celular**, que abre um QR Code do endereço **https://99eliel.github.io/pet/**. A mesma página pode ser acessada por múltiplos celulares e tablets; o ranking e as tentativas são sincronizados no Firebase de acordo com as permissões configuradas. O QR funciona offline no tablet, mas **o visitante precisa de conexão para abrir o site no celular**. O código QR é produzido sem terceiros pelo arquivo `qr.js`, a partir de uma matriz QR fixa para esse endereço.
+
+As médias de idade **não atribuem zero** a quem não preenche o campo. O painel exibe o número de partidas com idade conhecida e calcula as médias apenas entre elas. A média de idade entre erros de uma questão usa somente os erros com idade conhecida.
+
 ## Nova coleta de idade
 
-Na identificação do participante, o quiz solicita **nome/apelido e idade**. O campo de idade usa teclado numérico no tablet e aceita números inteiros de 1 a 120. A idade não é exibida no Top 5.
+Na identificação do participante, o quiz solicita **nome/apelido e idade opcional**. O campo opcional de idade usa teclado numérico no tablet e aceita números inteiros de 1 a 120. A idade não é exibida no Top 5.
 
 Nas **novas partidas concluídas**, o registro privado em `pet_grupo6_tentativas/{id}` pode conter o campo `age` (inteiro de 1 a 120). Ele fica junto às respostas, **sem nome/apelido**, e só é disponibilizado aos responsáveis autorizados pelas regras do Firestore.
 
