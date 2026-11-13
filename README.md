@@ -1,6 +1,6 @@
 # Quiz PET Saúde — Raízes Digitais
 
-> **Acesso administrativo simplificado:** senha numérica **00000000**, sem e-mail. O cadastro de um UID anônimo do navegador no Firestore é feito apenas na primeira utilização. O PIN é público no código do site; a autorização do UID é a proteção efetiva. Utilize o painel em um dispositivo da equipe.
+> **Relatórios e reset:** abra `admin.html` e digite **00000000**, sem e-mail, UID ou cadastro de administrador. Para ativar as funções, publique [firestore.rules](firestore.rules). **Importante:** o PIN é somente uma barreira visual; as regras simplificadas permitem consultar idades/respostas e reiniciar o placar por API sem a senha. Consulte os [cuidados de privacidade](docs/administracao-e-relatorios.md).
 
 
 ## Participação por QR Code e idade opcional
@@ -11,16 +11,16 @@ A **idade agora é opcional**. No cadastro há o campo numérico com teclado de 
 
 - Partidas **sem idade** contam integralmente para ranking, acertos, erros e taxa de erro por pergunta.
 - A média geral de idade e a média de idade de quem errou uma questão consideram **somente partidas com idade válida**; o painel informa quantas possuem idade conhecida.
-- A idade nunca aparece ao lado do nome no ranking público; permanece apenas na coleção privada de tentativas do Firestore.
+- A idade nunca aparece ao lado do nome no ranking público; permanece apenas na coleção de tentativas sem nome do Firestore.
 - As regras já aceitam registros sem idade para preservar compatibilidade com partidas antigas e participação voluntária.
 
-O PWA recebeu nova versão de cache (`pet-grupo6-feira-pwa-v15`). **Abra o aplicativo instalado no tablet com internet e recarregue a página uma vez**, depois teste o botão QR, o preenchimento opcional e o ranking em um segundo aparelho.
+O PWA usa o cache atualizado da versão atual. **Abra o aplicativo instalado no tablet com internet e recarregue a página uma vez**, depois teste o botão QR, o preenchimento opcional e o ranking em um segundo aparelho.
 
 ## Idade dos participantes e estatística de erros
 
 O cadastro do visitante agora pergunta **nome/apelido e, se desejar, idade** (campo numérico que abre teclado numérico no tablet). O jogo aceita idades inteiras entre **1 e 120 anos** e limpa o campo ao iniciar o cadastro de outro participante.
 
-A idade **não aparece no ranking nem acompanha o nome no documento público de pontuação**. Ela é gravada apenas no documento privado de tentativa concluída em `pet_grupo6_tentativas`, junto com os IDs das questões e os indicadores de acerto/erro, sob as regras de acesso administrativo.
+A idade **não aparece no ranking nem acompanha o nome no documento público de pontuação**. Ela é gravada apenas no documento de tentativa sem nome concluída em `pet_grupo6_tentativas`, junto com os IDs das questões e os indicadores de acerto/erro, sob as regras simplificadas do Firestore.
 
 O relatório em `admin.html` mostra:
 - **idade média geral**, calculada somente com as partidas concluídas que possuem idade informada;
@@ -31,7 +31,7 @@ O relatório em `admin.html` mostra:
 
 **Partidas antigas, sem idade**, continuam válidas para os cálculos de taxa de erros quando tiverem respostas registradas, mas não entram nas médias de idade. Uma pessoa pode jogar mais de uma vez; portanto, as médias representam **partidas do estande**, não participantes únicos ou uma amostra da população geral.
 
-**Obrigatório antes da feira:** publicar no Firebase Console a nova versão de [firestore.rules](firestore.rules), que passa a aceitar a idade apenas na coleção privada de tentativas, validando valores entre 1 e 120. O campo é opcional nas regras para que as partidas antigas ainda pendentes no armazenamento offline do tablet possam ser sincronizadas. Depois, abra o PWA com internet e recarregue (cache v14).
+**Obrigatório antes da feira:** publicar no Firebase Console a nova versão de [firestore.rules](firestore.rules), que passa a aceitar a idade apenas na coleção de tentativas sem nome, validando valores entre 1 e 120. O campo é opcional nas regras para que as partidas antigas ainda pendentes no armazenamento offline do tablet possam ser sincronizadas. Depois, abra o PWA com internet e recarregue.
 
 ## Gestão do placar e relatório de erros
 
@@ -40,10 +40,10 @@ A tela inicial agora possui os botões **Gerar relatório** e **Zerar placar**, 
 - **Zerar placar:** inicia uma nova edição, deixando o Top 5 vazio, sem apagar o histórico de respostas e as pontuações anteriores.
 - **Gerar relatório:** calcula taxa de erro por pergunta, total de respostas, acertos e erros, e desempenho por LGPD/SUS. Oferece **Salvar como PDF** pela impressão do navegador e **CSV** para Excel.
 - Os registros de erros são feitos **a partir desta versão e apenas para partidas concluídas**. Pontuações antigas não permitem identificar quais perguntas foram erradas.
-- O painel agora pede **somente a senha numérica 00000000**. Não é necessário criar e-mail. O navegador da equipe deve ser autorizado uma única vez por UID anônimo no Firestore; o reset ainda exige **ZERAR**.
+- O painel pede **somente a senha numérica 00000000**. Não é necessário e-mail nem autorização do dispositivo. O reset ainda exige digitar **ZERAR** para confirmação.
 - Os resultados analíticos são armazenados sem o nome do participante. O ranking público continua exibindo apenas os nomes/apelidos e pontos.
 
-**ATIVAÇÃO OBRIGATÓRIA NO FIREBASE:** publique [firestore.rules](firestore.rules), mantenha **Authentication Anônimo** habilitado e autorize o UID do navegador da equipe com `active: true` em `pet_grupo6_admins`. Na primeira abertura de `admin.html`, após digitar **00000000**, o próprio painel mostra o UID e explica como autorizar. Nas visitas seguintes basta a senha. Veja [Administração e relatórios](docs/administracao-e-relatorios.md).
+**ATIVAÇÃO OBRIGATÓRIA NO FIREBASE:** publique [firestore.rules](firestore.rules) e mantenha **Authentication Anônimo** habilitado. Não crie `pet_grupo6_admins` para este fluxo. Veja [Administração e relatórios](docs/administracao-e-relatorios.md).
 
 
 > **Revisão das perguntas (12/11/2026):** as 40 questões passaram por revisão editorial de clareza. A orientação sobre suspeita de infarto agora cita o SAMU 192; alternativas e explicações foram ajustadas, e o sorteio evita assuntos repetidos na mesma partida. Confira [a revisão detalhada](docs/revisao-questoes.md). Os registros já existentes no ranking não foram apagados. Para atualizar o PWA instalado no tablet, abra-o conectado à internet e recarregue a página.
