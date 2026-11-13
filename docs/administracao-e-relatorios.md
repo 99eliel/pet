@@ -1,153 +1,72 @@
-# Administração, reset do placar e relatório de desempenho — PET Saúde
+# Quiz PET Saúde — Relatórios e zerar placar
 
-Este documento descreve a nova interface disponível em:
+## Acesso simples para a feira
 
-**https://99eliel.github.io/pet/admin.html**
+Abra **https://99eliel.github.io/pet/admin.html**, digite a senha numérica **00000000** e clique em **Entrar no painel**.
 
-Na tela inicial do quiz, na seção do Top 5, aparecem os botões **Gerar relatório** e **Zerar placar**. Ambos pedem a senha do evento e exigem um navegador autorizado uma única vez no Firebase.
+Não há cadastro de e-mail, UID administrativo nem autorização de aparelho. O Firebase usa autenticação **anônima automática**, sem telas adicionais, para identificar as conexões do aplicativo.
 
-## Ajuste: participação pelo celular e idade voluntária
+Os botões **Gerar relatório** e **Zerar placar** estão abaixo do Top 5 na página inicial.
 
-O cadastro exige somente **nome/apelido**. A **idade é opcional**; quando preenchida, o tablet abre teclado numérico e valida de 1 a 120 anos. Participantes que não informam idade continuam participando normalmente e têm todos os erros contabilizados no relatório.
+### Configuração no Firebase
 
-A tela inicial possui o botão **Responder pelo celular**, que abre um QR Code do endereço **https://99eliel.github.io/pet/**. A mesma página pode ser acessada por múltiplos celulares e tablets; o ranking e as tentativas são sincronizados no Firebase de acordo com as permissões configuradas. O QR funciona offline no tablet, mas **o visitante precisa de conexão para abrir o site no celular**. O código QR é produzido sem terceiros pelo arquivo `qr.js`, a partir de uma matriz QR fixa para esse endereço.
+A configuração é feita somente uma vez e não exige nenhum cadastro de administrador:
 
-As médias de idade **não atribuem zero** a quem não preenche o campo. O painel exibe o número de partidas com idade conhecida e calcula as médias apenas entre elas. A média de idade entre erros de uma questão usa somente os erros com idade conhecida.
+1. Em https://console.firebase.google.com/project/petsaude6/authentication/providers, mantenha habilitado **Anonymous (Anônimo)**.
+2. Abra https://console.firebase.google.com/project/petsaude6/firestore/rules.
+3. Copie todo o conteúdo atualizado de [firestore.rules](../firestore.rules), substitua as regras do projeto **se ele for exclusivo do quiz** e clique em **Publicar**.
+4. Abra o quiz e faça uma partida completa. Em seguida, entre no painel com **00000000** e confirme se as estatísticas aparecem.
 
-## Nova coleta de idade
+Não é necessário criar a coleção `pet_grupo6_admins`. Se ela já existir, não é utilizada pelo painel atual; não é preciso excluí-la.
 
-Na identificação do participante, o quiz solicita **nome/apelido e idade opcional**. O campo opcional de idade usa teclado numérico no tablet e aceita números inteiros de 1 a 120. A idade não é exibida no Top 5.
+**Atenção:** a publicação do GitHub não publica as regras do Firestore automaticamente. Sem publicá-las, o relatório e o reset poderão apresentar `permission-denied`.
 
-Nas **novas partidas concluídas**, o registro privado em `pet_grupo6_tentativas/{id}` pode conter o campo `age` (inteiro de 1 a 120). Ele fica junto às respostas, **sem nome/apelido**, e só é disponibilizado aos responsáveis autorizados pelas regras do Firestore.
+## Relatório da feira
 
-O relatório inclui:
-- idade média de todas as partidas com idade conhecida (soma das idades ÷ total de partidas com idade conhecida);
-- número de partidas com idade conhecida para contextualizar a média;
-- idade média de quem **errou cada pergunta**, calculada só entre os erros daquela questão com idade conhecida;
-- essas médias nas exportações PDF (impressão) e CSV, além dos números de erros/acertos.
+Cada partida concluída registra na coleção `pet_grupo6_tentativas` as dez questões sorteadas, se foram acertadas, tempo gasto e a **idade opcional**.
 
-**Importante:** partidas anteriores que não têm `age` ficam de fora das médias; nenhum valor será inventado. Partidas antigas com respostas ainda contribuem para taxas de erro. Cada partida conta uma vez nas médias, mesmo que seja de uma pessoa que já participou, portanto não se trata de participantes únicos.
+O relatório mostra:
+- número de partidas completas;
+- total de respostas, acertos e erros;
+- taxa de erro por pergunta e por tema (LGPD e SUS);
+- média de idade entre as partidas que informaram idade;
+- média de idade de quem errou cada questão;
+- relatórios de **todas as edições** ou somente da **edição atual**.
 
-### Compatibilidade de regras e offline
+A exportação **PDF** abre a impressão do navegador (escolha **Salvar como PDF**). O botão **CSV** baixa uma tabela para Excel.
 
-É necessário **republicar `firestore.rules`** para admitir o novo campo `age`; caso contrário, o Firestore rejeitará novas tentativas. A regra aceita idade ausente apenas para sincronizar partidas de versões anteriores que ainda estejam guardadas no tablet offline. O nome segue armazenado apenas no ranking, e não no documento analítico de tentativa.
+As perguntas são sorteadas, portanto cada uma tem quantidades diferentes de respostas. Compare taxa de erro e tamanho da amostra. As médias representam **partidas**, não pessoas únicas; esse levantamento descreve quem participou da feira, não toda a população.
 
-## 1. Como funciona o relatório
+Registros antigos sem detalhes das respostas não podem gerar estatísticas retrospectivas. Idades não informadas nunca entram no cálculo da média.
 
-Cada partida **concluída após esta atualização** armazena, no Firestore, um documento de respostas em `pet_grupo6_tentativas/{id}` contendo:
-- identificador da edição do placar (sem dados pessoais);
-- versão do questionário;
-- 10 registros com ID da questão, acerto/erro e duração da resposta;
-- total de acertos e horário de envio ao servidor.
+## Zerar placar
 
-**Nome ou apelido NÃO acompanha o documento de respostas**, apenas a pontuação do ranking. A coleção de tentativas é de **leitura restrita aos responsáveis autorizados**.
+Clique em **Zerar placar**, entre com a senha, digite **ZERAR** e confirme a ação no navegador. É necessário estar conectado à internet.
 
-O relatório oferece filtros:
-- **Todas as edições:** agrega as tentativas registradas desde a implantação da funcionalidade.
-- **Somente edição atual:** agrega as tentativas registradas após o reset mais recente.
+O reset cria outra edição no documento `pet_grupo6_controle/placar`, de modo que o Top 5 da nova edição fica vazio. As partidas e rankings antigos não são apagados. O filtro **Todas as edições** continua permitindo análise histórica.
 
-Métricas:
-- partidas concluídas (não necessariamente participantes únicos);
-- respostas analisadas e taxa média de acertos/erros;
-- acertos de LGPD e SUS;
-- perguntas com **maior taxa de erro**, da maior para a menor, com quantidades de erros, acertos e respostas.
+Evite reiniciar o placar enquanto alguém está fazendo a prova: partidas em andamento permanecem ligadas à edição em que começaram.
 
-Fórmula: **taxa de erro por questão = erros da questão ÷ respostas recebidas naquela questão × 100**.
+## Privacidade e limites de segurança desta versão
 
-O sorteio faz com que questões diferentes tenham tamanhos de amostra diferentes. O painel mostra o tamanho da amostra e **não inventa números** para perguntas que ainda não foram respondidas. Uma questão com 1 erro em 1 resposta tem taxa de 100%, mas amostra muito pequena; interprete os dois números juntos.
+Esta versão foi propositalmente simplificada para um evento pontual. A senha `00000000` fica no código público do site e **não é uma proteção de servidor**.
 
-Para imprimir:
-1. Faça login no painel.
-2. Selecione o período.
-3. Clique **Gerar relatório em PDF**.
-4. Na janela de impressão, escolha **Salvar como PDF**.
+Ao eliminar a autorização administrativa, as regras precisam permitir que usuários autenticados anonimamente:
+- consultem registros de respostas, incluindo idades opcionais armazenadas em `pet_grupo6_tentativas`;
+- atualizem o documento de controle para iniciar outra edição.
 
-O documento pode incluir múltiplas páginas e tem layout A4 de impressão. **Exportar CSV** disponibiliza a tabela em formato de planilha.
+**Consequência:** qualquer pessoa com conhecimentos técnicos pode acessar esses registros ou reiniciar o placar diretamente pela API do Firebase, sem digitar a senha da interface. As estatísticas da tela não exibem nomes, e o registro analítico não guarda o nome, mas **idades e padrões individuais de resposta ficam tecnicamente acessíveis**. Não trate o PIN como controle de acesso real.
 
-### Limitações honestas
+Para reduzir exposição durante a feira, oriente a usar apelidos e a deixar a idade em branco quando não quiser informá-la. **Depois do evento, feche as regras de leitura/gravação ou desative a coleção**. Se a coleta exigir confidencialidade, é necessário voltar a uma solução com permissões reais no servidor.
 
-- Antes desta atualização, o quiz gravava apenas pontuação final. **Não é possível descobrir retrospectivamente as perguntas erradas nessas partidas.**
-- Partidas ainda na fila offline do tablet só aparecem no relatório depois da sincronização com o Firebase.
-- A estatística descreve os **participantes do estande**, não uma amostra representativa da população geral.
-- A aplicação é feita em navegador. Para competição com premiação de valor, seria necessário conferir respostas e pontuação em servidor confiável.
+As regras continuam verificando o formato dos resultados, protegendo contra edição/exclusão de respostas já registradas e limitando o número de registros retornados por consulta.
 
-## 2. Zerar placar sem apagar histórico
+## Testes recomendados
 
-A ação **não deleta** o ranking anterior nem os dados históricos. Ela define uma **nova edição ativa** no documento:
+1. Abra o painel em outro navegador e confira que só a senha é pedida.
+2. Faça partidas com e sem idade no tablet e por QR Code no celular.
+3. Confira o relatório em PDF e CSV; idades em branco devem ser ignoradas na média.
+4. Faça um reset de teste e verifique Top 5 vazio e histórico preservado.
+5. Teste a sincronização de uma partida offline depois de religar o Wi-Fi.
 
-`pet_grupo6_controle/placar`
-
-O quiz passa a exibir somente o ranking da edição atual:
-- antes do primeiro reset: coleção legada `pet_grupo6_ranking`;
-- depois do reset: `pet_grupo6_placares/{sessionId}/entradas`.
-
-O relatório **Todas as edições** continua incluindo todas as partidas novas que foram sincronizadas, mesmo após zerar o placar. O filtro **Edição atual** começa do zero junto com o novo ranking.
-
-A ação exige senha de acesso, navegador autorizado e digitar **ZERAR**, além de uma confirmação final. É preciso estar conectado à internet. Todos os tablets online atualizam automaticamente ao receber o novo ID da edição no Firestore.
-
-**Cuidado:** não utilize o reset enquanto um participante estiver respondendo. O sistema guarda a edição em que a pessoa começou, de modo que uma partida iniciada antes do reset pertença à edição anterior.
-
-## 3. Administração com senha única, sem e-mail
-
-**Senha usada no evento: `00000000`.** Abra https://99eliel.github.io/pet/admin.html, informe os oito números e entre no painel. Não existe campo para e-mail.
-
-### Autorizar o navegador uma única vez
-
-**É necessário liberar uma única vez o navegador da equipe no Firebase.** Isso protege o reset e as idades registradas no relatório. Depois, o acesso ao painel pede somente a senha.
-
-1. Em **Authentication → Sign-in method** no projeto `petsaude6`, mantenha o provedor **Anônimo (Anonymous)** habilitado. **Não precisa criar usuário de e-mail/senha.**
-2. Publique o arquivo [firestore.rules](../firestore.rules) em **Firestore Database → Rules**, se ainda não estiver publicado.
-3. No navegador que a equipe usará para gerar relatórios, abra **https://99eliel.github.io/pet/admin.html**, digite **00000000** e clique em **Entrar no painel**.
-4. Na primeira visita, aparecerá a tela **Autorizar este aparelho uma vez**. Clique em **Copiar identificador**.
-5. Em **Firestore Database → Dados**, crie a coleção `pet_grupo6_admins`, se não existir. Crie um documento com ID igual ao **identificador copiado** e adicione um campo `active` com tipo **boolean** e valor **true**.
-6. Volte ao painel e clique em **Já autorizei, verificar**. O relatório e o reset serão liberados.
-7. Nas próximas visitas **nesse mesmo navegador e perfil**, basta digitar **00000000**. O UID anônimo é mantido pelo Firebase no armazenamento do navegador. Se os dados do site forem apagados ou o acesso ocorrer em outro navegador, será necessário autorizar o novo UID.
-
-Para revogar o acesso, altere o campo `active` para **false** no Firestore. O botão **Bloquear painel** exige a senha novamente, sem perder a identidade do navegador autorizado.
-
-**Limitação importante:** a senha `00000000` está no código público do site, portanto não é uma credencial criptograficamente segura. A restrição real dos dados vem das regras do Firestore e do UID autorizado. Por isso, prefira usar o painel administrativo **no celular ou computador da equipe, nunca em um tablet deixado livre para visitantes**. Não compartilhe o UID autorizado.
-
-### Testar a integração
-
-1. Faça uma partida até o fim. Confira no Firestore a coleção `pet_grupo6_tentativas` e abra o relatório.
-2. Se desejar, faça um reset de teste, com a equipe avisada. O Top 5 da edição ficará vazio, mas o relatório **Todas as edições** manterá o histórico.
-3. Para verificar sincronização, jogue offline no tablet, religue o Wi-Fi e atualize o relatório no painel.
-
-### Alternativa para publicar as regras pelo terminal
-
-Na pasta do repositório, com Firebase CLI autenticado:
-
-~~~bash
-firebase deploy --only firestore:rules --project petsaude6
-~~~
-
-Esse comando publica **as regras do banco**, não o site, e pode alterar o acesso de outros aplicativos do projeto. Leia o arquivo antes de publicar.
-
-## 4. Estrutura técnica
-
-| Arquivo / coleção | Finalidade |
-|---|---|
-| `admin.html` | Login, relatório, PDF/CSV, reset |
-| `admin.js` | Autenticação, consultas, cálculos e alteração de edição |
-| `admin.css` | Interface responsiva e impressão A4 |
-| `app.js` | Captura das 10 respostas por partida concluída |
-| `scores.js` | Ranking por edição, fila de envio offline e tentativas |
-| `firestore.rules` | Leitura restrita do relatório, criação de tentativas e reset autorizado |
-| `pet_grupo6_admins/{uid}` | Autorização manual do responsável |
-| `pet_grupo6_controle/placar` | Identificador da edição ativa |
-| `pet_grupo6_tentativas/{id}` | Partidas concluídas, sem nome da pessoa |
-| `pet_grupo6_placares/{sessionId}/entradas/{id}` | Ranking das novas edições |
-| `pet_grupo6_ranking/{id}` | Ranking antigo, preservado até primeiro reset |
-
-As tentativas são registradas **inclusive quando a pontuação não supera o recorde anterior**. Sem isso, as taxas de erro ficariam distorcidas por avaliar somente os melhores resultados.
-
-## 5. Checklist para a feira
-
-- [ ] Regras publicadas e Authentication anônimo habilitado.
-- [ ] Navegador da equipe autorizado com UID em `pet_grupo6_admins`.
-- [ ] Relatório apresenta taxa de erro real após partidas de teste.
-- [ ] Top 5 é compartilhado entre os dispositivos.
-- [ ] Reset é bloqueado sem credenciais e requer confirmação.
-- [ ] Após reset, Top 5 vazio e histórico do relatório preservado.
-- [ ] Partida offline é sincronizada após retornar a conexão.
-- [ ] PWA atualizado em todos os tablets.
+O PWA e o GitHub Pages continuam sendo usados normalmente.
