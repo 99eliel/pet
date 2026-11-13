@@ -4,6 +4,8 @@ import { questionBank } from './questions.js';
 const $ = id => document.getElementById(id);
 const fmt = n => Number(n).toLocaleString('pt-BR');
 const pct = (yes, total) => total ? (100 * yes / total).toFixed(1).replace('.', ',') + '%' : '—';
+const meanAge = (sum, count) => count ? (sum / count).toFixed(1).replace('.', ',') + ' anos' : '—';
+const validAge = age => Number.isInteger(age) && age >= 1 && age <= 120;
 const PAGE_SIZE = 250;
 const MAX_ATTEMPTS = 10000;
 let firebase = null;
@@ -175,7 +177,7 @@ function calculate() {
     : attempts;
 
   const byId = new Map(questionBank.map(q => [
-    q.id, { id: q.id, prompt: q.prompt, theme: q.theme, total: 0, wrong: 0, correct: 0 }
+    q.id, { id: q.id, prompt: q.prompt, theme: q.theme, total: 0, wrong: 0, correct: 0, errorAgeSum: 0, errorAgeCount: 0 }
   ]));
   const byTheme = {
     lgpd: { total: 0, correct: 0 },
@@ -183,8 +185,14 @@ function calculate() {
   };
   let responseTotal = 0;
   let correctTotal = 0;
+  let ageSum = 0;
+  let ageCount = 0;
 
   for (const record of records) {
+    if (validAge(record.age)) {
+      ageSum += record.age;
+      ageCount++;
+    }
     if (!Array.isArray(record.answers)) continue;
     const counted = new Set();
     for (const answer of record.answers) {
@@ -195,7 +203,7 @@ function calculate() {
         const theme = answer.questionId.startsWith('lgpd') ? 'lgpd' : 'sus';
         byId.set(answer.questionId, {
           id: answer.questionId, prompt: 'Questão arquivada (' + answer.questionId + ')',
-          theme, total: 0, correct: 0, wrong: 0
+          theme, total: 0, correct: 0, wrong: 0, errorAgeSum: 0, errorAgeCount: 0
         });
       }
       const item = byId.get(answer.questionId);
@@ -204,7 +212,13 @@ function calculate() {
       if (answer.correct) {
         item.correct++;
         correctTotal++;
-      } else item.wrong++;
+      } else {
+        item.wrong++;
+        if (validAge(record.age)) {
+          item.errorAgeSum += record.age;
+          item.errorAgeCount++;
+        }
+      }
 
       if (byTheme[item.theme]) {
         byTheme[item.theme].total++;
@@ -215,7 +229,7 @@ function calculate() {
   const rows = [...byId.values()].filter(item => item.total > 0).sort((a,b) =>
     (b.wrong / b.total) - (a.wrong / a.total)
     || b.wrong - a.wrong || b.total - a.total || a.id.localeCompare(b.id));
-  return { scope, records, responseTotal, correctTotal, byTheme, rows };
+  return { scope, records, responseTotal, correctTotal, ageSum, ageCount, byTheme, rows };
 }
 
 function renderReport() {
@@ -226,6 +240,8 @@ function renderReport() {
   $('metricResponses').textContent = fmt(data.responseTotal);
   $('metricAccuracy').textContent = pct(data.correctTotal, data.responseTotal);
   $('metricError').textContent = pct(data.responseTotal - data.correctTotal, data.responseTotal);
+  $('metricAverageAge').textContent = meanAge(data.ageSum, data.ageCount);
+  $('metricAgeCoverage').textContent = fmt(data.ageCount) + ' de ' + fmt(data.records.length) + ' partidas com idade';
 
   for (const [key, label] of [['lgpd','Lgpd'],['sus','Sus']]) {
     const result = data.byTheme[key];
@@ -244,7 +260,7 @@ function renderReport() {
   if (!data.rows.length) {
     const tr = document.createElement('tr');
     const td = document.createElement('td');
-    td.colSpan = 6;
+    td.colSpan = 7;
     td.className = 'table-empty';
     td.textContent = 'Ainda não há partidas com respostas registradas neste período.';
     tr.append(td);
@@ -274,6 +290,15 @@ function renderReport() {
     chip.textContent = pct(row.wrong, row.total);
     rateCell.append(chip);
     tr.append(rateCell);
+    const ageCell = document.createElement('td');
+    ageCell.textContent = meanAge(row.errorAgeSum, row.errorAgeCount);
+    if (row.errorAgeCount > 0) {
+      const count = document.createElement('small');
+      count.className = 'question-id';
+      count.textContent = fmt(row.errorAgeCount) + (row.errorAgeCount === 1 ? ' idade conhecida' : ' idades conhecidas');
+      ageCell.append(count);
+    }
+    tr.append(ageCell);
     body.append(tr);
   }
 }
@@ -282,10 +307,12 @@ function downloadCsv() {
   if (!loaded) return;
   const csvCell = value => '"' + String(value).replace(/"/g, '""') + '"';
   const rows = [
-    ['ID', 'Tema', 'Pergunta', 'Respostas', 'Erros', 'Acertos', 'Taxa de erro (%)'],
+    ['ID', 'Tema', 'Pergunta', 'Respostas', 'Erros', 'Acertos', 'Taxa de erro (%)', 'Idade média de quem errou (anos)', 'Erros com idade conhecida'],
     ...rowsForExport.map(row => [
       row.id, row.theme.toUpperCase(), row.prompt, row.total,
-      row.wrong, row.correct, (100 * row.wrong / row.total).toFixed(1).replace('.', ',')
+      row.wrong, row.correct, (100 * row.wrong / row.total).toFixed(1).replace('.', ','),
+      row.errorAgeCount ? (row.errorAgeSum / row.errorAgeCount).toFixed(1).replace('.', ',') : '',
+      row.errorAgeCount
     ])
   ];
   const text = '\uFEFF' + rows.map(row => row.map(csvCell).join(';')).join('\r\n');
