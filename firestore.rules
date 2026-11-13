@@ -6,7 +6,8 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Usuários com email/senha NÃO ganham permissão administrativa sozinhos.
+    // Um PIN no código do site não substitui autorização no servidor.
+    // O painel usa um UID anônimo que precisa ser autorizado no Firestore.
     // É preciso que um administrador do Firebase crie manualmente o documento
     // pet_grupo6_admins/{UID} com { active: true }.
     function isAdmin() {
