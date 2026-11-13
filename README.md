@@ -1,8 +1,21 @@
 # Quiz PET Saúde — Raízes Digitais
 
+## Participação por QR Code e idade opcional
+
+Na tela inicial há agora o botão **Responder pelo celular**. Ele abre uma janela com QR Code grande que aponta para o endereço público fixo **https://99eliel.github.io/pet/**. O QR é desenhado localmente pelo arquivo `qr.js` (codificação QR pré-calculada) e **não utiliza serviços externos nem precisa de internet no tablet para aparecer**. O participante precisa de internet no celular para abrir o site. O quiz funciona no navegador do celular, usando o **mesmo ranking Firebase e os mesmos registros de desempenho** do tablet. A janela inclui link clicável e opção de copiar o endereço. Se o site mudar de domínio no futuro, atualize o endereço e a matriz QR.
+
+A **idade agora é opcional**. No cadastro há o campo numérico com teclado de números, mas o visitante pode deixá-lo vazio e começar a partida normalmente. Idades informadas devem ser inteiras entre 1 e 120 anos.
+
+- Partidas **sem idade** contam integralmente para ranking, acertos, erros e taxa de erro por pergunta.
+- A média geral de idade e a média de idade de quem errou uma questão consideram **somente partidas com idade válida**; o painel informa quantas possuem idade conhecida.
+- A idade nunca aparece ao lado do nome no ranking público; permanece apenas na coleção privada de tentativas do Firestore.
+- As regras já aceitam registros sem idade para preservar compatibilidade com partidas antigas e participação voluntária.
+
+O PWA recebeu nova versão de cache (`pet-grupo6-feira-pwa-v15`). **Abra o aplicativo instalado no tablet com internet e recarregue a página uma vez**, depois teste o botão QR, o preenchimento opcional e o ranking em um segundo aparelho.
+
 ## Idade dos participantes e estatística de erros
 
-O cadastro do visitante agora pergunta **nome/apelido e idade** (campo numérico que abre teclado numérico no tablet). O jogo aceita idades inteiras entre **1 e 120 anos** e limpa o campo ao iniciar o cadastro de outro participante.
+O cadastro do visitante agora pergunta **nome/apelido e, se desejar, idade** (campo numérico que abre teclado numérico no tablet). O jogo aceita idades inteiras entre **1 e 120 anos** e limpa o campo ao iniciar o cadastro de outro participante.
 
 A idade **não aparece no ranking nem acompanha o nome no documento público de pontuação**. Ela é gravada apenas no documento privado de tentativa concluída em `pet_grupo6_tentativas`, junto com os IDs das questões e os indicadores de acerto/erro, sob as regras de acesso administrativo.
 
