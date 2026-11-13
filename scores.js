@@ -208,7 +208,7 @@ export function startLeaderboard({ config, onChange, onMode }) {
         const attemptRef = api.doc(db, ATTEMPTS_COLLECTION, item.id);
         const refs = [attemptRef];
         const batch = api.writeBatch(db);
-        batch.set(attemptRef, {
+        const analyticsRecord = {
           sessionId: item.sessionId,
           questionSet: item.questionSet,
           total: 10,
@@ -216,7 +216,13 @@ export function startLeaderboard({ config, onChange, onMode }) {
           answers: item.answers,
           submittedBy: auth.currentUser.uid,
           createdAt: api.serverTimestamp()
-        });
+        };
+        // Pontuações antigas ainda pendentes podem não ter idade.
+        // Nesse caso, mantenha o registro para análise de erros sem inventar idade.
+        if (Number.isInteger(item.age) && item.age >= 1 && item.age <= 120) {
+          analyticsRecord.age = item.age;
+        }
+        batch.set(attemptRef, analyticsRecord);
         if (item.isNewBest) {
           const rankRef = api.doc(sessionCollection(db, api, item.sessionId), item.id);
           batch.set(rankRef, resultPayload(item, auth.currentUser.uid, api));
@@ -283,6 +289,9 @@ export function startLeaderboard({ config, onChange, onMode }) {
     refresh() { emit(); if (authenticated) syncPending().catch(console.warn); else connect(); },
 
     async save(result) {
+      if (!Number.isInteger(result.age) || result.age < 1 || result.age > 120) {
+        throw new Error('Informe uma idade válida antes de iniciar o quiz.');
+      }
       const sid = validSession(result.sessionId) ? result.sessionId : sessionId;
       if (!Array.isArray(result.answers) || result.answers.length !== 10 ||
         result.answers.some(a => typeof a.questionId !== 'string' ||
@@ -294,6 +303,7 @@ export function startLeaderboard({ config, onChange, onMode }) {
         id: makeId(),
         sessionId: sid,
         name: normalizeName(result.name),
+        age: result.age,
         score: Math.round(result.score),
         correct: Math.round(result.correct),
         total: 10,
@@ -315,7 +325,11 @@ export function startLeaderboard({ config, onChange, onMode }) {
       // TODAS as tentativas serão registradas para o relatório, mesmo com
       // pontuação menor do que a partida anterior desse mesmo participante.
       queue.push(row);
-      if (row.isNewBest) local.push({ ...row, answers: undefined });
+      if (row.isNewBest) {
+        // A idade NÃO é armazenada ao lado do nome no ranking local.
+        const { age, answers, ...publicScore } = row;
+        local.push(publicScore);
+      }
       try {
         saveQueue();
       } catch (error) {
