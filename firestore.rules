@@ -1,30 +1,29 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // O quiz usa apenas esta coleção; nenhum outro dado tem acesso liberado.
-    match /pet_grupo6_ranking/{scoreId} {
+    function signedIn() {
+      return request.auth != null;
+    }
 
-      // O Top 5 é público: mostrar apenas nome/apelido e pontuação.
-      // A consulta do site solicita no máximo 100 registros.
-      allow list: if request.query.limit != null && request.query.limit <= 100;
-      allow get: if false;
+    // Usuários com email/senha NÃO ganham permissão administrativa sozinhos.
+    // É preciso que um administrador do Firebase crie manualmente o documento
+    // pet_grupo6_admins/{UID} com { active: true }.
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/pet_grupo6_admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/pet_grupo6_admins/$(request.auth.uid)).data.active == true;
+    }
 
-      // Criação autenticada de um resultado por ID único.
-      // Esta regra valida estrutura e valores, mas NÃO prova que o
-      // participante respondeu honestamente. Para premiações de valor,
-      // validação de perguntas e relógio deve ocorrer no servidor.
-      allow create: if request.auth != null
-        && scoreId.size() >= 15
-        && scoreId.size() <= 80
+    function validScore() {
+      return signedIn()
         && request.resource.data.keys().hasOnly([
-          'name', 'score', 'correct', 'total', 'elapsedMs',
-          'questionSet', 'submittedBy', 'createdAt'
+          'name','score','correct','total','elapsedMs',
+          'questionSet','submittedBy','createdAt'
         ])
         && request.resource.data.keys().hasAll([
-          'name', 'score', 'correct', 'total', 'elapsedMs',
-          'questionSet', 'submittedBy', 'createdAt'
+          'name','score','correct','total','elapsedMs',
+          'questionSet','submittedBy','createdAt'
         ])
         && request.resource.data.submittedBy == request.auth.uid
         && request.resource.data.name is string
@@ -45,8 +44,96 @@ service cloud.firestore {
         && request.resource.data.questionSet.size() <= 80
         && request.resource.data.createdAt is timestamp
         && request.resource.data.createdAt == request.time;
+    }
 
-      // O público não pode alterar nem excluir um resultado do ranking.
+    function validAnswer(answer) {
+      return answer is map
+        && answer.keys().hasOnly(['questionId','correct','elapsedMs'])
+        && answer.keys().hasAll(['questionId','correct','elapsedMs'])
+        && answer.questionId is string
+        && answer.questionId.size() >= 3
+        && answer.questionId.size() <= 30
+        && answer.correct is bool
+        && answer.elapsedMs is int
+        && answer.elapsedMs >= 0
+        && answer.elapsedMs <= 2147483647;
+    }
+
+    function validAnswers(answers) {
+      return answers is list && answers.size() == 10
+        && validAnswer(answers[0]) && validAnswer(answers[1])
+        && validAnswer(answers[2]) && validAnswer(answers[3])
+        && validAnswer(answers[4]) && validAnswer(answers[5])
+        && validAnswer(answers[6]) && validAnswer(answers[7])
+        && validAnswer(answers[8]) && validAnswer(answers[9]);
+    }
+
+    match /pet_grupo6_admins/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow list, create, update, delete: if false;
+    }
+
+    // Trocar a edição ativa zera o placar visível SEM excluir documentos
+    // anteriores nem as respostas históricas para pesquisa.
+    match /pet_grupo6_controle/placar {
+      allow get: if true;
+      allow list, delete: if false;
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly(['sessionId','resetAt','resetBy'])
+        && request.resource.data.keys().hasAll(['sessionId','resetAt','resetBy'])
+        && request.resource.data.sessionId is string
+        && request.resource.data.sessionId.matches('^ed-[A-Za-z0-9_-]{12,60}$')
+        && request.resource.data.resetBy == request.auth.uid
+        && request.resource.data.resetAt == request.time;
+    }
+
+    // Preserva o placar existente antes do primeiro reset.
+    match /pet_grupo6_ranking/{scoreId} {
+      allow list: if request.query.limit != null && request.query.limit <= 100;
+      allow get: if signedIn() && resource.data.submittedBy == request.auth.uid;
+      allow create: if scoreId.size() >= 15 && scoreId.size() <= 80 && validScore();
+      allow update, delete: if false;
+    }
+
+    // A partir do reset, cada nova edição tem seu ranking isolado.
+    match /pet_grupo6_placares/{sessionId}/entradas/{scoreId} {
+      allow list: if request.query.limit != null && request.query.limit <= 100;
+      allow get: if signedIn() && resource.data.submittedBy == request.auth.uid;
+      allow create: if sessionId.matches('^ed-[A-Za-z0-9_-]{12,60}$')
+        && scoreId.size() >= 15 && scoreId.size() <= 80
+        && validScore();
+      allow update, delete: if false;
+    }
+
+    // Um documento por partida concluída. SEM nome, CPF, telefone ou foto.
+    // Os registros são legíveis APENAS pelos responsáveis cadastrados.
+    match /pet_grupo6_tentativas/{attemptId} {
+      allow list: if isAdmin();
+      allow get: if isAdmin() || (signedIn() && resource.data.submittedBy == request.auth.uid);
+      allow create: if signedIn()
+        && attemptId.size() >= 15 && attemptId.size() <= 80
+        && request.resource.data.keys().hasOnly([
+          'sessionId','questionSet','total','correct','answers','submittedBy','createdAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'sessionId','questionSet','total','correct','answers','submittedBy','createdAt'
+        ])
+        && request.resource.data.sessionId is string
+        && (
+          request.resource.data.sessionId == 'legado'
+          || request.resource.data.sessionId.matches('^ed-[A-Za-z0-9_-]{12,60}$')
+        )
+        && request.resource.data.questionSet is string
+        && request.resource.data.questionSet.size() >= 1
+        && request.resource.data.questionSet.size() <= 80
+        && request.resource.data.total == 10
+        && request.resource.data.correct is int
+        && request.resource.data.correct >= 0
+        && request.resource.data.correct <= 10
+        && request.resource.data.submittedBy == request.auth.uid
+        && validAnswers(request.resource.data.answers)
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.createdAt == request.time;
       allow update, delete: if false;
     }
   }
