@@ -109,9 +109,9 @@
           <label for="playerName">Seu nome</label>
           <input id="playerName" name="playerName" type="text" autocomplete="given-name" maxlength="28" minlength="2" required placeholder="Digite seu nome">
           <p class="field-error" id="nameError" aria-live="polite"></p>
-          <label for="playerAge">Sua idade</label>
-          <input id="playerAge" name="playerAge" type="number" inputmode="numeric" min="1" max="120" step="1" required placeholder="Digite sua idade" autocomplete="off" aria-describedby="ageHint ageError">
-          <p class="age-hint" id="ageHint">Usada apenas nas estatísticas do evento. Não aparece no ranking.</p>
+          <label for="playerAge">Sua idade <span class="optional-label">(opcional)</span></label>
+          <input id="playerAge" name="playerAge" type="number" inputmode="numeric" min="1" max="120" step="1" placeholder="Digite sua idade (se quiser)" autocomplete="off" aria-describedby="ageHint ageError">
+          <p class="age-hint" id="ageHint">Se quiser informar, a idade ajuda nas estatísticas. Ela não aparece no ranking.</p>
           <p class="field-error" id="ageError" aria-live="polite"></p>
           <div class="rule-box">
             <span aria-hidden="true">⏱</span>
