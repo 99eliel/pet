@@ -4,7 +4,7 @@ Este documento descreve a nova interface disponível em:
 
 **https://99eliel.github.io/pet/admin.html**
 
-Na tela inicial do quiz, na seção do Top 5, aparecem os botões **Gerar relatório** e **Zerar placar**. Os dois exigem autenticação administrativa.
+Na tela inicial do quiz, na seção do Top 5, aparecem os botões **Gerar relatório** e **Zerar placar**. Ambos pedem a senha do evento e exigem um navegador autorizado uma única vez no Firebase.
 
 ## Ajuste: participação pelo celular e idade voluntária
 
@@ -83,28 +83,35 @@ O quiz passa a exibir somente o ranking da edição atual:
 
 O relatório **Todas as edições** continua incluindo todas as partidas novas que foram sincronizadas, mesmo após zerar o placar. O filtro **Edição atual** começa do zero junto com o novo ranking.
 
-A ação exige login autorizado e digitar **ZERAR**, além de uma confirmação final. É preciso estar conectado à internet. Todos os tablets online atualizam automaticamente ao receber o novo ID da edição no Firestore.
+A ação exige senha de acesso, navegador autorizado e digitar **ZERAR**, além de uma confirmação final. É preciso estar conectado à internet. Todos os tablets online atualizam automaticamente ao receber o novo ID da edição no Firestore.
 
 **Cuidado:** não utilize o reset enquanto um participante estiver respondendo. O sistema guarda a edição em que a pessoa começou, de modo que uma partida iniciada antes do reset pertença à edição anterior.
 
-## 3. Ativação obrigatória no Firebase (uma vez)
+## 3. Administração com senha única, sem e-mail
 
-**As alterações do código e das regras estão no repositório, mas publicar o GitHub NÃO publica as regras no Firebase.** Para ativar de verdade:
+**Senha usada no evento: `00000000`.** Abra https://99eliel.github.io/pet/admin.html, informe os oito números e entre no painel. Não existe campo para e-mail.
 
-1. Acesse o projeto **petsaude6** em https://console.firebase.google.com/project/petsaude6/overview.
-2. Em **Authentication → Sign-in method**, mantenha **Anônimo** habilitado (para participantes) e ative também **Email/Password** (para responsáveis).
-3. Em **Authentication → Users**, clique para adicionar um usuário administrativo com seu próprio e-mail e uma senha forte. **Copie o UID** desse usuário.
-4. Em **Firestore Database → Data**, crie uma coleção com ID `pet_grupo6_admins`, e um documento cujo ID seja **exatamente o UID** da conta criada. Insira o campo:
-   - nome: `active`
-   - tipo: **boolean**
-   - valor: **true**
-5. Em **Firestore Database → Rules**, cole o conteúdo atualizado do arquivo [firestore.rules](../firestore.rules) e clique em **Publish**.
-6. Abra **https://99eliel.github.io/pet/admin.html** e entre com e-mail/senha. O login é **temporário, apenas nesta aba**: ao fechar/recarregar a página será necessário autenticar novamente.
-7. Faça uma partida de teste até o final no tablet. Verifique no Firestore uma entrada em `pet_grupo6_tentativas` e teste o relatório.
-8. Se desejar, faça um **reset de teste** (com a equipe avisada) e confira que o Top 5 foi zerado mas o relatório de **todas as edições** continua com a partida de teste.
-9. Desligue o Wi-Fi, conclua outra partida, religue e aguarde a sincronização. Recarregue o relatório para conferir os resultados.
+### Autorizar o navegador uma única vez
 
-**Não é necessário colocar senha de administrador no código, no GitHub ou nesta conversa.** A autorização é feita com autenticação e UID cadastrado no Firestore. Para revogar acesso, ajuste o campo `active` para false ou remova o documento pelo Firebase Console.
+**É necessário liberar uma única vez o navegador da equipe no Firebase.** Isso protege o reset e as idades registradas no relatório. Depois, o acesso ao painel pede somente a senha.
+
+1. Em **Authentication → Sign-in method** no projeto `petsaude6`, mantenha o provedor **Anônimo (Anonymous)** habilitado. **Não precisa criar usuário de e-mail/senha.**
+2. Publique o arquivo [firestore.rules](../firestore.rules) em **Firestore Database → Rules**, se ainda não estiver publicado.
+3. No navegador que a equipe usará para gerar relatórios, abra **https://99eliel.github.io/pet/admin.html**, digite **00000000** e clique em **Entrar no painel**.
+4. Na primeira visita, aparecerá a tela **Autorizar este aparelho uma vez**. Clique em **Copiar identificador**.
+5. Em **Firestore Database → Dados**, crie a coleção `pet_grupo6_admins`, se não existir. Crie um documento com ID igual ao **identificador copiado** e adicione um campo `active` com tipo **boolean** e valor **true**.
+6. Volte ao painel e clique em **Já autorizei, verificar**. O relatório e o reset serão liberados.
+7. Nas próximas visitas **nesse mesmo navegador e perfil**, basta digitar **00000000**. O UID anônimo é mantido pelo Firebase no armazenamento do navegador. Se os dados do site forem apagados ou o acesso ocorrer em outro navegador, será necessário autorizar o novo UID.
+
+Para revogar o acesso, altere o campo `active` para **false** no Firestore. O botão **Bloquear painel** exige a senha novamente, sem perder a identidade do navegador autorizado.
+
+**Limitação importante:** a senha `00000000` está no código público do site, portanto não é uma credencial criptograficamente segura. A restrição real dos dados vem das regras do Firestore e do UID autorizado. Por isso, prefira usar o painel administrativo **no celular ou computador da equipe, nunca em um tablet deixado livre para visitantes**. Não compartilhe o UID autorizado.
+
+### Testar a integração
+
+1. Faça uma partida até o fim. Confira no Firestore a coleção `pet_grupo6_tentativas` e abra o relatório.
+2. Se desejar, faça um reset de teste, com a equipe avisada. O Top 5 da edição ficará vazio, mas o relatório **Todas as edições** manterá o histórico.
+3. Para verificar sincronização, jogue offline no tablet, religue o Wi-Fi e atualize o relatório no painel.
 
 ### Alternativa para publicar as regras pelo terminal
 
@@ -136,8 +143,8 @@ As tentativas são registradas **inclusive quando a pontuação não supera o re
 
 ## 5. Checklist para a feira
 
-- [ ] Regras novas publicadas e Email/Password habilitado.
-- [ ] Conta administrativa criada e UID autorizado em `pet_grupo6_admins`.
+- [ ] Regras publicadas e Authentication anônimo habilitado.
+- [ ] Navegador da equipe autorizado com UID em `pet_grupo6_admins`.
 - [ ] Relatório apresenta taxa de erro real após partidas de teste.
 - [ ] Top 5 é compartilhado entre os dispositivos.
 - [ ] Reset é bloqueado sem credenciais e requer confirmação.
