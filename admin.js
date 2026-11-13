@@ -226,9 +226,10 @@ function renderReport() {
 
   for (const [key, label] of [['lgpd','Lgpd'],['sus','Sus']]) {
     const result = data.byTheme[key];
-    $( 'theme' + label ).textContent = pct(result.correct, result.total);
-    $( 'bar' + label ).style.width = result.total ? (100 * result.correct / result.total) + '%' : '0%';
-    $( 'detail' + label ).textContent = fmt(result.correct) + ' acertos em ' + fmt(result.total) + ' respostas';
+    const errors = result.total - result.correct;
+    $('theme' + label).textContent = pct(errors, result.total);
+    $('bar' + label).style.width = result.total ? (100 * errors / result.total) + '%' : '0%';
+    $('detail' + label).textContent = fmt(errors) + ' erros em ' + fmt(result.total) + ' respostas';
   }
   $('reportMeta').textContent =
     (data.scope === 'current' ? 'Edição atual' : 'Histórico completo') +
