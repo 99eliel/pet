@@ -8,6 +8,8 @@ const bonusDecayMs = quizConfig.bonusDecaySeconds * 1000;
 const roundSize = quizConfig.questionsPerRound.boolean + quizConfig.questionsPerRound.multiple;
 const maxScore = roundSize * (quizConfig.correctPoints + quizConfig.maxSpeedBonus);
 let questions = [];
+let roundAnswers = [];
+let roundSessionId = 'legado';
 let leaderboardStore = null;
 let leaderboardPromise = null;
 let currentRanking = [];
@@ -136,6 +138,8 @@ function beginQuiz() {
   }
   player = proposedName.slice(0, 28);
   questions = buildQuestionRound();
+  roundSessionId = leaderboardStore?.sessionId || 'legado';
+  roundAnswers = [];
   questionIndex = 0;
   totalScore = 0;
   correctAnswers = 0;
@@ -207,6 +211,11 @@ function answerQuestion(selectedIndex) {
   const elapsed = Math.max(0, performance.now() - questionStartedAt);
   const isCorrect = selectedIndex === question.correctIndex;
   totalAnswerTimeMs += elapsed;
+  roundAnswers.push({
+    questionId: question.id,
+    correct: isCorrect,
+    elapsedMs: Math.min(2147483647, Math.round(elapsed))
+  });
 
   const buttons = [...$('answerGrid').querySelectorAll('.answer-option')];
   buttons.forEach((button, index) => {
@@ -270,7 +279,9 @@ async function finishQuiz() {
     score: totalScore,
     correct: correctAnswers,
     total: questions.length,
-    elapsedMs: Math.round(totalAnswerTimeMs)
+    elapsedMs: Math.min(2147483647, Math.round(totalAnswerTimeMs)),
+    sessionId: roundSessionId,
+    answers: roundAnswers.map(answer => ({ ...answer }))
   };
 
   try {
@@ -281,7 +292,7 @@ async function finishQuiz() {
     const place = ordered.findIndex(entry => entry.name.toLocaleLowerCase('pt-BR') === player.toLocaleLowerCase('pt-BR'));
     $('rankPosition').textContent = place === -1 ? '—' : (place + 1) + 'º';
     $('saveMessage').textContent = !saved.locallySaved
-      ? 'Não foi possível confirmar o salvamento da pontuação.'
+      ? 'Não foi possível confirmar o registro. Verifique o armazenamento do tablet.'
       : !saved.isNewBest
         ? 'Você já tem uma pontuação igual ou melhor registrada no ranking.'
         : store.pendingCount > 0
