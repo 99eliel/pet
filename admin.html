@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#091b22">
+  <title>Administração e Relatórios | Quiz PET Saúde</title>
+  <meta name="description" content="Painel restrito para relatório de erros e gestão do placar do Quiz PET Saúde.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="tablet.css">
+  <link rel="stylesheet" href="admin.css">
+  <script defer src="theme.js"></script>
+  <script type="module" src="admin.js"></script>
+</head>
+<body class="admin-page">
+  <header class="admin-header">
+    <div class="admin-container admin-head-inner">
+      <a href="./" class="admin-brand" aria-label="Voltar ao Quiz PET Saúde">
+        <img src="assets/favicon.svg" alt="">
+        <span><strong>PET Saúde</strong><small>Administração do quiz</small></span>
+      </a>
+      <nav aria-label="Navegação principal" class="admin-nav">
+        <a class="admin-back" href="./">← Voltar ao quiz</a>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Ativar tema claro">
+          <span id="themeToggleIcon" aria-hidden="true">☀</span><span id="themeToggleLabel">Tema claro</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+  <main class="admin-container">
+    <section class="admin-title">
+      <div><p class="admin-eyebrow">ACESSO RESTRITO · PET SAÚDE</p><h1>Relatórios e placar</h1>
+        <p>Analise os acertos e erros dos participantes e gerencie as edições do ranking.</p>
+      </div>
+    </section>
+
+    <section id="loginArea" class="admin-login-card" aria-labelledby="loginTitle">
+      <div class="admin-login-icon" aria-hidden="true">🔒</div>
+      <h2 id="loginTitle">Entrar como administrador</h2>
+      <p>Este painel exige uma conta autorizada no Firebase. Os participantes não precisam fazer login.</p>
+      <form id="loginForm">
+        <label for="adminEmail">E-mail</label>
+        <input id="adminEmail" type="email" autocomplete="username" required placeholder="responsavel@exemplo.com">
+        <label for="adminPassword">Senha</label>
+        <input id="adminPassword" type="password" autocomplete="current-password" required placeholder="Sua senha de administrador">
+        <button id="loginButton" class="btn btn-primary" type="submit">Acessar painel</button>
+      </form>
+      <p class="admin-error" id="loginMessage" role="alert" aria-live="polite"></p>
+    </section>
+
+    <section id="adminPanel" hidden>
+      <div class="admin-session-bar">
+        <p><span class="admin-connected-dot"></span> Acesso autorizado: <strong id="adminIdentity">—</strong></p>
+        <button type="button" id="logoutButton" class="admin-quiet-btn">Sair com segurança</button>
+      </div>
+      <section class="admin-tools" aria-label="Ferramentas administrativas">
+        <div class="admin-tool-heading">
+          <div><h2>Desempenho dos participantes</h2><p>Respostas registradas a partir da ativação desta funcionalidade.</p></div>
+          <span id="activeSessionLabel" class="admin-session-label">Carregando edição…</span>
+        </div>
+        <div class="admin-tool-controls">
+          <label for="reportScope">Período do relatório
+            <select id="reportScope">
+              <option value="all">Todas as edições</option>
+              <option value="current">Somente edição atual</option>
+            </select>
+          </label>
+          <button id="refreshReport" type="button" class="admin-secondary-btn">↻ Atualizar dados</button>
+          <button id="printReport" type="button" class="btn btn-primary" disabled>Gerar relatório em PDF</button>
+          <button id="downloadCsv" type="button" class="admin-secondary-btn" disabled>Exportar CSV</button>
+        </div>
+        <p class="admin-info" id="loadMessage" role="status" aria-live="polite">Entre para visualizar os dados.</p>
+      </section>
+
+      <section class="report-paper" id="reportPaper" aria-labelledby="reportTitle">
+        <div class="report-head">
+          <div class="report-symbol"><img src="assets/logo-pet-vetorial.svg" alt="PET Saúde"></div>
+          <div>
+            <p class="report-eyebrow">RAÍZES DIGITAIS · LGPD E SUS</p>
+            <h2 id="reportTitle">Relatório de desempenho</h2>
+            <p id="reportMeta">Aguardando dados</p>
+          </div>
+        </div>
+        <div class="admin-metrics">
+          <div><small>PARTIDAS CONCLUÍDAS</small><strong id="metricAttempts">—</strong></div>
+          <div><small>RESPOSTAS ANALISADAS</small><strong id="metricResponses">—</strong></div>
+          <div><small>TAXA DE ACERTO</small><strong id="metricAccuracy">—</strong></div>
+          <div><small>TAXA DE ERRO</small><strong id="metricError">—</strong></div>
+        </div>
+        <div class="theme-metrics">
+          <div><span>LGPD</span><strong id="themeLgpd">—</strong><div class="metric-bar"><i id="barLgpd"></i></div><small id="detailLgpd">Aguardando respostas</small></div>
+          <div><span>SUS</span><strong id="themeSus">—</strong><div class="metric-bar"><i id="barSus"></i></div><small id="detailSus">Aguardando respostas</small></div>
+        </div>
+        <div class="report-section-title">
+          <div><h3>Questões com maiores taxas de erro</h3><p>Ordenadas pelo percentual de erro. A quantidade de respostas aparece ao lado para contextualizar cada resultado.</p></div>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Questão</th><th>Tema</th><th>Respostas</th><th>Erros</th><th>Acertos</th><th>Taxa de erro</th></tr></thead>
+            <tbody id="questionRows"><tr><td colspan="6" class="table-empty">Entre para gerar o relatório.</td></tr></tbody>
+          </table>
+        </div>
+        <div class="report-methodology">
+          <strong>Como interpretar</strong>
+          <p>Taxa de erro = respostas incorretas ÷ respostas recebidas naquela pergunta × 100. Como as perguntas são sorteadas, cada uma pode ter quantidades diferentes de respostas.</p>
+          <p>Os dados representam <strong>partidas realizadas no estande</strong>, não uma amostra estatisticamente representativa da população. Uma pessoa pode participar mais de uma vez.</p>
+          <p>Partidas anteriores à implantação do registro por pergunta não podem ser reconstruídas a partir do ranking antigo. Resultados ainda não sincronizados do tablet não aparecem no relatório online.</p>
+        </div>
+      </section>
+
+      <section class="reset-card" id="resetSection" aria-labelledby="resetTitle">
+        <div class="reset-title"><span aria-hidden="true">↻</span><div><h2 id="resetTitle">Zerar placar</h2>
+          <p>Inicia uma nova edição com Top 5 vazio. O histórico e os dados de desempenho continuam preservados para análise.</p></div>
+        </div>
+        <form id="resetForm">
+          <label for="resetPhrase">Para confirmar, digite <strong>ZERAR</strong></label>
+          <div class="reset-actions"><input id="resetPhrase" autocomplete="off" spellcheck="false" placeholder="Digite ZERAR" required><button id="resetButton" type="submit" class="reset-button" disabled>Iniciar novo placar</button></div>
+          <p id="resetMessage" class="admin-info" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+    </section>
+  </main>
+  <footer class="admin-footer admin-container">PET Saúde · Relatório destinado à equipe organizadora · Não compartilhe o acesso administrativo.</footer>
+</body>
+</html>
