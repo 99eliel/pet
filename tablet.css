@@ -292,3 +292,27 @@ html[data-theme="dark"] .ranking-admin-link:hover {background:#225348;}
 @media(max-width:420px) {
   .ranking-admin-tools{grid-template-columns:1fr;}
 }
+
+/* Cadastro: idade abre teclado numérico e mantém leitura confortável no tablet. */
+#playerAge {
+  display:block;
+  width:100%;
+  min-height:59px;
+  padding:15px 17px;
+  border:1px solid #d8e5e0;
+  background:#f9fbfa;
+  color:var(--ink);
+  border-radius:12px;
+  outline:none;
+  font-size:clamp(20px,2.2vw,27px);
+  font-variant-numeric:tabular-nums;
+}
+#playerAge:focus { border-color:#519c88; box-shadow:0 0 0 3px #e0f1e9; }
+#playerForm label[for="playerAge"] { font-size:clamp(14px,1.6vw,18px); margin-top:12px; }
+#playerForm .age-hint {font-size:12px;line-height:1.5;color:#718f82;margin:8px 0 0;}
+html[data-theme="dark"] #playerAge {background:#102530;border-color:#44636c;color:#effbf6;}
+html[data-theme="dark"] #playerAge::placeholder {color:#90a9a9;}
+html[data-theme="dark"] #playerForm .age-hint {color:#afccc0;}
+@media(min-width:700px) and (pointer:coarse) {
+  #playerAge {min-height:70px;font-size:26px;}
+}
