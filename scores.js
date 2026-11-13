@@ -1,238 +1,350 @@
 import { firebaseConfig } from './firebase-config.js';
 
 /**
- * Ranking do PET Saúde — armazenamento local + sincronização Firestore.
+ * Ranking por edição + registro anônimo de respostas individuais.
  *
- * Cada partida terminada é guardada no tablet imediatamente e recebe um ID
- * estável. Se a internet cair, o envio é refeito automaticamente quando
- * voltar a conexão. setDoc com ID fixo evita envios duplicados.
+ * A primeira edição é "legado" para preservar o placar existente.
+ * Após o reset autorizado, cada edição usa uma subcoleção própria.
+ * Tentativas de TODAS as edições ficam em pet_grupo6_tentativas,
+ * sem nome de participante, para permitir análise histórica.
+ *
+ * Todo resultado é salvo no tablet ANTES do envio ao Firebase.
  */
-const LOCAL_KEY = 'pet-grupo6-ranking-local-v2';
-const PENDING_KEY = 'pet-grupo6-ranking-pending-v2';
-const COLLECTION = 'pet_grupo6_ranking';
+const LEGACY_COLLECTION = 'pet_grupo6_ranking';
+const CONTROL_PATH = ['pet_grupo6_controle', 'placar'];
+const ATTEMPTS_COLLECTION = 'pet_grupo6_tentativas';
+const SESSION_KEY = 'pet-grupo6-edicao-atual-v1';
+const LOCAL_KEY = 'pet-grupo6-ranking-local-v3';
+const QUEUE_KEY = 'pet-grupo6-tentativas-pendentes-v3';
+const OLD_LOCAL_KEY = 'pet-grupo6-ranking-local-v2';
+const OLD_QUEUE_KEY = 'pet-grupo6-ranking-pending-v2';
 
 const normalizeName = name => String(name || '').trim().replace(/\s+/g, ' ').slice(0, 28);
+const validSession = id => typeof id === 'string' && /^(legado|ed-[a-zA-Z0-9_-]{12,60})$/.test(id);
 
-/** Retém a melhor partida por nome. Empate: menor tempo total. */
 export function rankEntries(entries) {
-  const byName = new Map();
+  const best = new Map();
   for (const row of entries) {
-    if (!row || typeof row.name !== 'string' || !Number.isFinite(row.score)) continue;
+    if (!row || !Number.isFinite(row.score) || typeof row.name !== 'string') continue;
     const name = normalizeName(row.name);
-    if (!name || row.score < 0) continue;
-    const entry = {
-      ...row,
-      name,
-      elapsedMs: Number.isFinite(row.elapsedMs) ? row.elapsedMs : 0
-    };
+    if (!name) continue;
+    const normalized = { ...row, name, elapsedMs: Number(row.elapsedMs) || 0 };
     const key = name.toLocaleLowerCase('pt-BR');
-    const prior = byName.get(key);
-    if (!prior || entry.score > prior.score ||
-        (entry.score === prior.score && entry.elapsedMs < prior.elapsedMs)) {
-      byName.set(key, entry);
+    const prior = best.get(key);
+    if (!prior || normalized.score > prior.score ||
+      (normalized.score === prior.score && normalized.elapsedMs < prior.elapsedMs)) {
+      best.set(key, normalized);
     }
   }
-  return [...byName.values()].sort((a,b) => b.score - a.score
-    || a.elapsedMs - b.elapsedMs || a.name.localeCompare(b.name, 'pt-BR'));
+  return [...best.values()].sort((a, b) => b.score - a.score ||
+    a.elapsedMs - b.elapsedMs || a.name.localeCompare(b.name, 'pt-BR'));
 }
 
 function readArray(key) {
   try {
     const data = JSON.parse(localStorage.getItem(key) || '[]');
     return Array.isArray(data) ? data : [];
-  } catch (error) {
-    console.warn('Armazenamento indisponível:', key, error);
-    return [];
-  }
+  } catch { return []; }
 }
-
-function persistArray(key, array) {
-  localStorage.setItem(key, JSON.stringify(array));
-}
-
+function persist(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
 function makeId() {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
-  }
-  // Fallback caso a API de UUID não exista neste navegador.
-  return String(Date.now()) + '-' + Math.random().toString(36).slice(2, 15);
+  return typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2, 15);
+}
+function getCachedSession() {
+  try {
+    const value = localStorage.getItem(SESSION_KEY);
+    return validSession(value) ? value : 'legado';
+  } catch { return 'legado'; }
+}
+function sessionCollection(db, api, sessionId) {
+  return sessionId === 'legado'
+    ? api.collection(db, LEGACY_COLLECTION)
+    : api.collection(db, 'pet_grupo6_placares', sessionId, 'entradas');
+}
+function resultPayload(item, uid, api) {
+  return {
+    name: item.name,
+    score: item.score,
+    correct: item.correct,
+    total: 10,
+    elapsedMs: item.elapsedMs,
+    questionSet: item.questionSet,
+    submittedBy: uid,
+    createdAt: api.serverTimestamp()
+  };
 }
 
+/**
+ * Retorno síncrono para que o quiz continue funcionando mesmo sem internet.
+ * Os snapshots do Firebase atualizam a lista quando estiverem disponíveis.
+ */
 export function startLeaderboard({ config, onChange, onMode }) {
-  const hasConfig = firebaseConfig?.apiKey && firebaseConfig?.projectId;
+  let sessionId = getCachedSession();
   let local = readArray(LOCAL_KEY);
-  let pending = readArray(PENDING_KEY);
+  let queue = readArray(QUEUE_KEY);
+  let legacyLocal = readArray(OLD_LOCAL_KEY);
+  let legacyQueue = readArray(OLD_QUEUE_KEY);
   let remote = [];
-  let syncRunning = null;
-  let remoteReady = false;
-  let authReady = false;
-  let lastError = '';
-  let active = true;
-  let firestore = null;
+  let db = null;
   let auth = null;
-  let firebaseApi = null;
-  let unsubscribe = null;
-  let connectionAttempt = null;
-  let lastServerSnapshot = false;
+  let api = null;
+  let authenticated = false;
+  let scoreServerLoaded = false;
+  let lastError = '';
+  let connecting = null;
+  let syncJob = null;
+  let unsubscribeScores = null;
+  let unsubscribeControl = null;
+  const hasFirebase = Boolean(firebaseConfig?.apiKey && firebaseConfig?.projectId);
 
-  const status = () => {
-    if (!hasConfig) return 'local';
-    if (!remoteReady || !authReady) return lastError ? 'erro' : 'conectando';
-    if (!lastServerSnapshot) return 'offline';
-    return pending.length ? 'pendente' : 'online';
-  };
+  function localFor(session) {
+    return local.filter(x => x.sessionId === session)
+      .concat(session === 'legado' ? legacyLocal : []);
+  }
+  function pendingCount() { return queue.length + legacyQueue.length; }
+  function mode() {
+    if (!hasFirebase) return 'local';
+    if (lastError) return 'erro';
+    if (!authenticated) return 'conectando';
+    if (!scoreServerLoaded || !navigator.onLine) return 'offline';
+    return pendingCount() ? 'pendente' : 'online';
+  }
+  function emit() {
+    onChange(rankEntries([...remote, ...localFor(sessionId)]), mode());
+    onMode(mode(), pendingCount());
+  }
+  function saveQueue() {
+    persist(LOCAL_KEY, local);
+    persist(QUEUE_KEY, queue);
+  }
 
-  const emit = () => {
-    const combined = rankEntries([...remote, ...local]);
-    onMode(status(), pending.length);
-    onChange(combined, status());
-  };
-  const store = {
-    get mode() { return status(); },
-    get pendingCount() { return pending.length; },
-    refresh() { emit(); },
-    async save(result) {
-      const row = {
-        id: makeId(),
-        name: normalizeName(result.name),
-        score: Math.round(result.score),
-        correct: Math.round(result.correct),
-        total: Math.round(result.total),
-        elapsedMs: Math.max(0, Math.round(result.elapsedMs)),
-        questionSet: config.questionSetVersion,
-        savedAt: Date.now()
-      };
-      // Somente a melhor partida de cada nome precisa ser transmitida.
-      // Evita várias tentativas da mesma pessoa ocuparem todo o Top 100.
-      const best = rankEntries([...remote, ...local])
-        .find(x => x.name.toLocaleLowerCase('pt-BR') === row.name.toLocaleLowerCase('pt-BR'));
-      const isNewBest = !best || row.score > best.score
-        || (row.score === best.score && row.elapsedMs < best.elapsedMs);
+  function subscribeScores() {
+    unsubscribeScores?.();
+    remote = [];
+    scoreServerLoaded = false;
+    emit();
+    if (!authenticated || !db) return;
+    const current = sessionId;
+    const top = api.query(sessionCollection(db, api, current),
+      api.orderBy('score', 'desc'), api.limit(100));
+    unsubscribeScores = api.onSnapshot(top, { includeMetadataChanges: true }, snapshot => {
+      if (current !== sessionId) return;
+      remote = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+      scoreServerLoaded = !snapshot.metadata.fromCache;
+      lastError = '';
+      emit();
+      if (scoreServerLoaded) syncPending().catch(console.warn);
+    }, error => {
+      if (current !== sessionId) return;
+      lastError = error?.code || String(error);
+      scoreServerLoaded = false;
+      console.error('Não foi possível consultar o ranking:', error);
+      emit();
+    });
+  }
 
-      if (isNewBest) {
-        // Salvar primeiro no tablet é crucial: depois de cinco segundos,
-        // a tela de resultado se fecha mesmo sem conexão.
-        local = rankEntries([...local, row]).slice(0, 300);
-        // Substitui tentativa antiga ainda não enviada do mesmo nome.
-        pending = pending.filter(x =>
-          x.name.toLocaleLowerCase('pt-BR') !== row.name.toLocaleLowerCase('pt-BR'));
-        pending.push(row);
+  function changeSession(next) {
+    if (!validSession(next) || next === sessionId) return;
+    sessionId = next;
+    try { localStorage.setItem(SESSION_KEY, next); } catch { /* Armazenamento indisponível */ }
+    subscribeScores();
+  }
+
+  function subscribeControl() {
+    unsubscribeControl?.();
+    unsubscribeControl = api.onSnapshot(
+      api.doc(db, ...CONTROL_PATH),
+      { includeMetadataChanges: true },
+      snapshot => {
+        // Se estiver offline sem cache, preserve o último ID conhecido no tablet.
+        if (!snapshot.exists() && snapshot.metadata.fromCache) return;
+        changeSession(snapshot.exists() ? snapshot.data().sessionId : 'legado');
+      }, error => {
+        console.warn('Não foi possível consultar a edição ativa:', error);
+        // O quiz continua na última edição conhecida.
+      }
+    );
+  }
+
+  async function safeWrite(batch, verification) {
+    try {
+      await batch.commit();
+      return;
+    } catch (error) {
+      // A confirmação pode se perder mesmo quando o servidor já gravou.
+      // Somente considere confirmado se TODOS os documentos estiverem lá.
+      try {
+        const refs = verification.map(ref => api.getDocFromServer(ref));
+        const found = await Promise.all(refs);
+        if (found.every(snapshot => snapshot.exists())) return;
+      } catch { /* Preserva erro original */ }
+      throw error;
+    }
+  }
+
+  async function syncPending() {
+    if (!authenticated || !db || !api || !navigator.onLine) return;
+    if (syncJob) return syncJob;
+    syncJob = (async () => {
+      // Também preserva pontuações pendentes das versões anteriores do quiz.
+      while (legacyQueue.length) {
+        const old = legacyQueue[0];
         try {
-          persistArray(LOCAL_KEY, local);
-          persistArray(PENDING_KEY, pending);
+          const ref = api.doc(db, LEGACY_COLLECTION, old.id);
+          const batch = api.writeBatch(db);
+          batch.set(ref, resultPayload(old, auth.currentUser.uid, api));
+          await safeWrite(batch, [ref]);
+          legacyQueue = legacyQueue.filter(x => x.id !== old.id);
+          persist(OLD_QUEUE_KEY, legacyQueue);
+          emit();
         } catch (error) {
-          console.error('Erro ao gravar pontuação no tablet:', error);
-          throw new Error('Sem permissão para guardar a pontuação no tablet.');
-        }
-        emit();
-        if (authReady && firestore) {
-          // Não bloqueia a página de resultados enquanto o Wi-Fi estiver lento.
-          syncPending().catch(error => console.warn('Sincronização pendente:', error));
+          console.warn('Pontuação antiga pendente:', error);
+          break;
         }
       }
-      return { locallySaved: true, isNewBest, pending: pending.length > 0 };
-    }
-  };
-
-  const syncPending = () => {
-    if (!authReady || !firestore || !pending.length || !active) return Promise.resolve();
-    if (syncRunning) return syncRunning;
-    syncRunning = (async () => {
-      while (pending.length && authReady && active) {
-        const item = pending[0];
+      while (queue.length) {
+        const item = queue[0];
+        const attemptRef = api.doc(db, ATTEMPTS_COLLECTION, item.id);
+        const refs = [attemptRef];
+        const batch = api.writeBatch(db);
+        batch.set(attemptRef, {
+          sessionId: item.sessionId,
+          questionSet: item.questionSet,
+          total: 10,
+          correct: item.correct,
+          answers: item.answers,
+          submittedBy: auth.currentUser.uid,
+          createdAt: api.serverTimestamp()
+        });
+        if (item.isNewBest) {
+          const rankRef = api.doc(sessionCollection(db, api, item.sessionId), item.id);
+          batch.set(rankRef, resultPayload(item, auth.currentUser.uid, api));
+          refs.push(rankRef);
+        }
         try {
-          await firebaseApi.setDoc(
-            firebaseApi.doc(firestore, COLLECTION, item.id),
-            {
-              name: item.name,
-              score: item.score,
-              correct: item.correct,
-              total: item.total,
-              elapsedMs: item.elapsedMs,
-              questionSet: item.questionSet,
-              submittedBy: auth.currentUser.uid,
-              createdAt: firebaseApi.serverTimestamp()
-            }
-          );
-          // Remove apenas depois de receber confirmação de gravação.
-          pending = pending.filter(row => row.id !== item.id);
-          persistArray(PENDING_KEY, pending);
+          await safeWrite(batch, refs);
+          queue = queue.filter(row => row.id !== item.id);
+          persist(QUEUE_KEY, queue);
           lastError = '';
           emit();
         } catch (error) {
           lastError = error?.code || String(error);
-          console.warn('Falha ao sincronizar pontuação:', error);
+          console.warn('Resultado aguardando sincronização:', error);
           emit();
           break;
         }
       }
-    })().finally(() => { syncRunning = null; });
-    return syncRunning;
-  };
+    })().finally(() => { syncJob = null; });
+    return syncJob;
+  }
 
   async function connect() {
-    if (!hasConfig || !active) return;
-    if (connectionAttempt) return connectionAttempt;
-    connectionAttempt = (async () => {
+    if (!hasFirebase || connecting) return connecting;
+    connecting = (async () => {
       try {
         const [
           { initializeApp, getApps, getApp },
-          { getFirestore, collection, query, orderBy, limit, onSnapshot, doc, setDoc, serverTimestamp },
+          {
+            getFirestore, collection, doc, query, orderBy, limit, onSnapshot,
+            writeBatch, serverTimestamp, getDocFromServer
+          },
           { getAuth, signInAnonymously }
         ] = await Promise.all([
           import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js'),
           import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js'),
           import('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js')
         ]);
-        const app = getApps().some(a => a.name === '[DEFAULT]')
+        const app = getApps().some(x => x.name === '[DEFAULT]')
           ? getApp() : initializeApp(firebaseConfig);
-        firestore = getFirestore(app);
+        db = getFirestore(app);
         auth = getAuth(app);
-        firebaseApi = { doc, setDoc, serverTimestamp };
-        await signInAnonymously(auth);
-        authReady = Boolean(auth.currentUser);
-        remoteReady = true;
-        const collectionRef = collection(firestore, COLLECTION);
-        const top = query(collectionRef, orderBy('score', 'desc'), limit(100));
-        unsubscribe = onSnapshot(top, { includeMetadataChanges: true }, snapshot => {
-          remote = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-          lastServerSnapshot = !snapshot.metadata.fromCache;
-          lastError = '';
-          emit();
-          if (lastServerSnapshot) syncPending().catch(console.warn);
-        }, error => {
-          lastError = error?.code || String(error);
-          lastServerSnapshot = false;
-          console.error('Erro ao consultar ranking Firebase:', error);
-          emit();
-        });
-        emit();
+        api = { collection, doc, query, orderBy, limit, onSnapshot, writeBatch, serverTimestamp, getDocFromServer };
+        if (!auth.currentUser) await signInAnonymously(auth);
+        authenticated = Boolean(auth.currentUser);
+        lastError = '';
+        subscribeControl();
+        subscribeScores();
         syncPending().catch(console.warn);
+        emit();
       } catch (error) {
-        authReady = false;
-        remoteReady = false;
-        lastServerSnapshot = false;
         lastError = error?.code || String(error);
-        console.warn('Firebase indisponível; modo local ativo:', error);
+        console.warn('Firebase indisponível; mantendo o quiz local:', error);
         emit();
       }
-    })().finally(() => { connectionAttempt = null; });
-    return connectionAttempt;
+    })().finally(() => { connecting = null; });
+    return connecting;
   }
 
+  const store = {
+    get mode() { return mode(); },
+    get sessionId() { return sessionId; },
+    get pendingCount() { return pendingCount(); },
+    refresh() { emit(); if (authenticated) syncPending().catch(console.warn); else connect(); },
+
+    async save(result) {
+      const sid = validSession(result.sessionId) ? result.sessionId : sessionId;
+      if (!Array.isArray(result.answers) || result.answers.length !== 10 ||
+        result.answers.some(a => typeof a.questionId !== 'string' ||
+          typeof a.correct !== 'boolean' ||
+          !Number.isInteger(a.elapsedMs) || a.elapsedMs < 0)) {
+        throw new Error('A partida não contém 10 respostas válidas para o relatório.');
+      }
+      const row = {
+        id: makeId(),
+        sessionId: sid,
+        name: normalizeName(result.name),
+        score: Math.round(result.score),
+        correct: Math.round(result.correct),
+        total: 10,
+        elapsedMs: Math.max(0, Math.round(result.elapsedMs)),
+        questionSet: config.questionSetVersion,
+        answers: result.answers.map(a => ({
+          questionId: a.questionId,
+          correct: a.correct,
+          elapsedMs: a.elapsedMs
+        })),
+        savedAt: Date.now()
+      };
+      const previousBest = rankEntries([
+        ...localFor(sid), ...(sid === sessionId ? remote : [])
+      ]).find(entry => entry.name.toLocaleLowerCase('pt-BR') === row.name.toLocaleLowerCase('pt-BR'));
+      row.isNewBest = !previousBest || row.score > previousBest.score ||
+        (row.score === previousBest.score && row.elapsedMs < previousBest.elapsedMs);
+
+      // TODAS as tentativas serão registradas para o relatório, mesmo com
+      // pontuação menor do que a partida anterior desse mesmo participante.
+      queue.push(row);
+      if (row.isNewBest) local.push({ ...row, answers: undefined });
+      try {
+        saveQueue();
+      } catch (error) {
+        queue = queue.filter(x => x.id !== row.id);
+        local = local.filter(x => x.id !== row.id);
+        throw new Error('Não foi possível guardar os dados no tablet.');
+      }
+      emit();
+      if (authenticated) syncPending().catch(console.warn);
+      return { locallySaved: true, isNewBest: row.isNewBest, pending: pendingCount() > 0 };
+    }
+  };
+
   window.addEventListener('online', () => {
-    if (!remoteReady || !authReady) connect();
-    else syncPending().catch(console.warn);
+    scoreServerLoaded = false;
+    if (!authenticated) connect(); else syncPending().catch(console.warn);
     emit();
   });
   window.addEventListener('offline', () => {
-    lastServerSnapshot = false;
+    scoreServerLoaded = false;
     emit();
   });
   window.addEventListener('storage', event => {
-    if (![LOCAL_KEY, PENDING_KEY].includes(event.key)) return;
+    if (![LOCAL_KEY, QUEUE_KEY, OLD_LOCAL_KEY, OLD_QUEUE_KEY, SESSION_KEY].includes(event.key)) return;
     local = readArray(LOCAL_KEY);
-    pending = readArray(PENDING_KEY);
+    queue = readArray(QUEUE_KEY);
+    legacyLocal = readArray(OLD_LOCAL_KEY);
+    legacyQueue = readArray(OLD_QUEUE_KEY);
+    if (event.key === SESSION_KEY) changeSession(getCachedSession());
     emit();
   });
 
