@@ -79,6 +79,9 @@ async function signIn(event) {
     $('adminPassword').value = '';
     showMessage('loginMessage', '');
     await refreshReport();
+    if (location.hash === '#zerar') {
+      $('resetSection').scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
   } catch (error) {
     console.error('Acesso administrativo:', error);
     showMessage('loginMessage', friendlyError(error));
