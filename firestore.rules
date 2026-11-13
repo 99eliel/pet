@@ -6,15 +6,10 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Um PIN no código do site não substitui autorização no servidor.
-    // O painel usa um UID anônimo que precisa ser autorizado no Firestore.
-    // É preciso que um administrador do Firebase crie manualmente o documento
-    // pet_grupo6_admins/{UID} com { active: true }.
-    function isAdmin() {
-      return signedIn()
-        && exists(/databases/$(database)/documents/pet_grupo6_admins/$(request.auth.uid))
-        && get(/databases/$(database)/documents/pet_grupo6_admins/$(request.auth.uid)).data.active == true;
-    }
+    // A feira usa uma senha apenas na interface web.
+    // Atenção: essa senha NÃO protege o Firestore; qualquer usuário
+    // autenticado anonimamente pode ler tentativas ou iniciar outro placar.
+    // Não usar estas regras com dados que exijam acesso restrito.
 
     function validScore() {
       return signedIn()
@@ -69,17 +64,14 @@ service cloud.firestore {
         && validAnswer(answers[8]) && validAnswer(answers[9]);
     }
 
-    match /pet_grupo6_admins/{uid} {
-      allow get: if signedIn() && request.auth.uid == uid;
-      allow list, create, update, delete: if false;
-    }
-
     // Trocar a edição ativa zera o placar visível SEM excluir documentos
     // anteriores nem as respostas históricas para pesquisa.
     match /pet_grupo6_controle/placar {
       allow get: if true;
       allow list, delete: if false;
-      allow create, update: if isAdmin()
+      // Liberado a qualquer usuário do quiz autenticado anonimamente.
+      // Não há cadastro de administrador nem validação do PIN pelo servidor.
+      allow create, update: if signedIn()
         && request.resource.data.keys().hasOnly(['sessionId','resetAt','resetBy'])
         && request.resource.data.keys().hasAll(['sessionId','resetAt','resetBy'])
         && request.resource.data.sessionId is string
@@ -107,10 +99,14 @@ service cloud.firestore {
     }
 
     // Um documento por partida concluída. SEM nome, CPF, telefone ou foto.
-    // Os registros são legíveis APENAS pelos responsáveis cadastrados.
+    // Para relatório sem login administrativo, a consulta é liberada a
+    // usuários anônimos. Idades e respostas individuais ficam acessíveis
+    // via Firestore: coletar idade somente se o participante desejar.
     match /pet_grupo6_tentativas/{attemptId} {
-      allow list: if isAdmin();
-      allow get: if isAdmin() || (signedIn() && resource.data.submittedBy == request.auth.uid);
+      allow list: if signedIn()
+        && request.query.limit != null
+        && request.query.limit <= 250;
+      allow get: if signedIn() && resource.data.submittedBy == request.auth.uid;
       allow create: if signedIn()
         && attemptId.size() >= 15 && attemptId.size() <= 80
         && request.resource.data.keys().hasOnly([
