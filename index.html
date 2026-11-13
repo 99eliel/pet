@@ -109,6 +109,10 @@
           <label for="playerName">Seu nome</label>
           <input id="playerName" name="playerName" type="text" autocomplete="given-name" maxlength="28" minlength="2" required placeholder="Digite seu nome">
           <p class="field-error" id="nameError" aria-live="polite"></p>
+          <label for="playerAge">Sua idade</label>
+          <input id="playerAge" name="playerAge" type="number" inputmode="numeric" min="1" max="120" step="1" required placeholder="Digite sua idade" autocomplete="off" aria-describedby="ageHint ageError">
+          <p class="age-hint" id="ageHint">Usada apenas nas estatísticas do evento. Não aparece no ranking.</p>
+          <p class="field-error" id="ageError" aria-live="polite"></p>
           <div class="rule-box">
             <span aria-hidden="true">⏱</span>
             <p>Você pode usar <strong id="rulesSeconds">o tempo que precisar</strong> em cada pergunta. <strong>Acertar rápido dá pontos extras, mas não existe prazo para responder.</strong> Após responder, leia a breve explicação antes de continuar.</p>
