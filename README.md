@@ -1,5 +1,18 @@
 # Quiz PET Saúde — Raízes Digitais
 
+## Gestão do placar e relatório de erros
+
+A tela inicial agora possui os botões **Gerar relatório** e **Zerar placar**, que abrem o painel restrito `admin.html`.
+
+- **Zerar placar:** inicia uma nova edição, deixando o Top 5 vazio, sem apagar o histórico de respostas e as pontuações anteriores.
+- **Gerar relatório:** calcula taxa de erro por pergunta, total de respostas, acertos e erros, e desempenho por LGPD/SUS. Oferece **Salvar como PDF** pela impressão do navegador e **CSV** para Excel.
+- Os registros de erros são feitos **a partir desta versão e apenas para partidas concluídas**. Pontuações antigas não permitem identificar quais perguntas foram erradas.
+- O painel exige conta autorizada do Firebase com e-mail/senha; a confirmação de reset exige digitar **ZERAR**.
+- Os resultados analíticos são armazenados sem o nome do participante. O ranking público continua exibindo apenas os nomes/apelidos e pontos.
+
+**ATIVAÇÃO OBRIGATÓRIA NO FIREBASE:** as novas regras **não** são publicadas automaticamente ao atualizar o GitHub. É necessário publicar o arquivo [firestore.rules](firestore.rules), habilitar autenticação por Email/Password e criar um documento administrativo de autorização no Firebase Console. Veja as instruções detalhadas em **[Administração e relatórios](docs/administracao-e-relatorios.md)** antes de utilizar as funções. O login anônimo dos participantes deve continuar habilitado.
+
+
 > **Revisão das perguntas (12/11/2026):** as 40 questões passaram por revisão editorial de clareza. A orientação sobre suspeita de infarto agora cita o SAMU 192; alternativas e explicações foram ajustadas, e o sorteio evita assuntos repetidos na mesma partida. Confira [a revisão detalhada](docs/revisao-questoes.md). Os registros já existentes no ranking não foram apagados. Para atualizar o PWA instalado no tablet, abra-o conectado à internet e recarregue a página.
 
 
