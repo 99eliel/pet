@@ -37,22 +37,33 @@
 
     <section id="loginArea" class="admin-login-card" aria-labelledby="loginTitle">
       <div class="admin-login-icon" aria-hidden="true">🔒</div>
-      <h2 id="loginTitle">Entrar como administrador</h2>
-      <p>Este painel exige uma conta autorizada no Firebase. Os participantes não precisam fazer login.</p>
+      <h2 id="loginTitle">Acesso da organização</h2>
+      <p>Para abrir os relatórios ou zerar o placar, informe a senha do evento. Não é necessário e-mail.</p>
       <form id="loginForm">
-        <label for="adminEmail">E-mail</label>
-        <input id="adminEmail" type="email" autocomplete="username" required placeholder="responsavel@exemplo.com">
-        <label for="adminPassword">Senha</label>
-        <input id="adminPassword" type="password" autocomplete="current-password" required placeholder="Sua senha de administrador">
-        <button id="loginButton" class="btn btn-primary" type="submit">Acessar painel</button>
+        <label for="adminPassword">Senha de acesso</label>
+        <input id="adminPassword" type="password" inputmode="numeric" autocomplete="off" maxlength="8" minlength="8" pattern="[0-9]{8}" required placeholder="Digite os 8 números">
+        <button id="loginButton" class="btn btn-primary" type="submit">Entrar no painel</button>
       </form>
       <p class="admin-error" id="loginMessage" role="alert" aria-live="polite"></p>
     </section>
 
+    <section id="adminSetup" class="admin-login-card" hidden aria-labelledby="setupTitle">
+      <div class="admin-login-icon" aria-hidden="true">🔑</div>
+      <h2 id="setupTitle">Autorizar este aparelho uma vez</h2>
+      <p>Sem e-mail: basta cadastrar o identificador deste navegador no Firebase para liberar relatórios e reset. Depois disso, o acesso será somente pela senha.</p>
+      <label for="adminDeviceUid" class="admin-uid-label">Identificador do dispositivo</label>
+      <code id="adminDeviceUid" class="admin-uid" tabindex="0"></code>
+      <button id="copyAdminUid" type="button" class="admin-secondary-btn admin-setup-button">Copiar identificador</button>
+      <p>Em <strong>Firestore Database → Dados</strong>, crie a coleção <code>pet_grupo6_admins</code>. Crie um documento com o identificador acima como ID e o campo <code>active</code> (boolean) igual a <code>true</code>.</p>
+      <button id="checkAuthorization" type="button" class="btn btn-primary admin-setup-button">Já autorizei, verificar</button>
+      <button id="cancelAuthorization" type="button" class="admin-secondary-btn admin-setup-button">Voltar</button>
+      <p id="setupMessage" class="admin-error" role="status" aria-live="polite"></p>
+    </section>
+
     <section id="adminPanel" hidden>
       <div class="admin-session-bar">
-        <p><span class="admin-connected-dot"></span> Acesso autorizado: <strong id="adminIdentity">—</strong></p>
-        <button type="button" id="logoutButton" class="admin-quiet-btn">Sair com segurança</button>
+        <p><span class="admin-connected-dot"></span> Dispositivo autorizado: <strong id="adminIdentity">—</strong></p>
+        <button type="button" id="logoutButton" class="admin-quiet-btn">Bloquear painel</button>
       </div>
       <section class="admin-tools" aria-label="Ferramentas administrativas">
         <div class="admin-tool-heading">
