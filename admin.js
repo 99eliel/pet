@@ -8,6 +8,10 @@ const meanAge = (sum, count) => count ? (sum / count).toFixed(1).replace('.', ',
 const validAge = age => Number.isInteger(age) && age >= 1 && age <= 120;
 const PAGE_SIZE = 250;
 const MAX_ATTEMPTS = 10000;
+// Conveniência visual para o evento, não é um segredo seguro no código público.
+// O Firestore continua exigindo um UID autorizado no servidor.
+const EVENT_PIN = '00000000';
+let pinUnlocked = false;
 let firebase = null;
 let auth = null;
 let db = null;
@@ -20,10 +24,7 @@ let rowsForExport = [];
 
 function showMessage(id, value) { $(id).textContent = value; }
 function friendlyError(error) {
-  if (error?.code === 'auth/invalid-credential' || error?.code === 'auth/wrong-password') {
-    return 'E-mail ou senha inválidos.';
-  }
-  if (error?.code === 'auth/too-many-requests') return 'Muitas tentativas de login. Tente novamente mais tarde.';
+  if (error?.code === 'auth/too-many-requests') return 'Muitas tentativas de conexão. Tente novamente mais tarde.';
   if (error?.code === 'permission-denied') return 'Acesso negado pelo Firebase. Confira o cadastro de administrador e as regras do Firestore.';
   if (!navigator.onLine || error?.code === 'unavailable') return 'Sem conexão com o Firebase. Conecte à internet e tente novamente.';
   return 'Não foi possível concluir a operação. ' + (error?.message || 'Verifique as configurações do Firebase.');
@@ -38,7 +39,7 @@ async function ensureFirebase() {
       query, orderBy, limit, startAfter, setDoc, serverTimestamp
     },
     {
-      getAuth, signInWithEmailAndPassword, signOut, setPersistence, inMemoryPersistence
+      getAuth, signInAnonymously, setPersistence, browserLocalPersistence
     }
   ] = await Promise.all([
     import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js'),
@@ -50,42 +51,65 @@ async function ensureFirebase() {
     || initializeApp(firebaseConfig, appName);
   db = getFirestore(app);
   auth = getAuth(app);
-  // Não persistir autenticação administrativa no tablet público da feira.
-  await setPersistence(auth, inMemoryPersistence);
+  // O UID anônimo precisa continuar igual depois de fechar/reabrir o navegador.
+  // Caso contrário seria necessário autorizar o dispositivo toda vez.
+  await setPersistence(auth, browserLocalPersistence);
+  if (typeof auth.authStateReady === 'function') await auth.authStateReady();
   firebase = {
     doc, getDocFromServer, getDocsFromServer, collection, query,
     orderBy, limit, startAfter, setDoc, serverTimestamp,
-    signInWithEmailAndPassword, signOut
+    signInAnonymously
   };
+}
+
+async function authorizeDevice() {
+  const user = auth?.currentUser;
+  if (!user || !pinUnlocked) throw new Error('Digite a senha para acessar o painel.');
+  const adminDoc = await firebase.getDocFromServer(firebase.doc(db, 'pet_grupo6_admins', user.uid));
+  if (!adminDoc.exists() || adminDoc.data()?.active !== true) {
+    adminUser = null;
+    $('loginArea').hidden = true;
+    $('adminPanel').hidden = true;
+    $('adminSetup').hidden = false;
+    $('adminDeviceUid').textContent = user.uid;
+    showMessage('setupMessage', 'Faça a autorização uma vez no Firebase e toque em “Já autorizei, verificar”.');
+    return false;
+  }
+
+  adminUser = user;
+  $('loginArea').hidden = true;
+  $('adminSetup').hidden = true;
+  $('adminPanel').hidden = false;
+  $('adminIdentity').textContent = 'Este navegador';
+  $('adminPassword').value = '';
+  showMessage('loginMessage', '');
+  await refreshReport();
+  if (location.hash === '#zerar') {
+    $('resetSection').scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
+  return true;
 }
 
 async function signIn(event) {
   event.preventDefault();
-  const email = $('adminEmail').value.trim();
   const password = $('adminPassword').value;
   const button = $('loginButton');
+  if (password !== EVENT_PIN) {
+    $('adminPassword').value = '';
+    showMessage('loginMessage', 'Senha incorreta.');
+    $('adminPassword').focus();
+    return;
+  }
+
   button.disabled = true;
-  showMessage('loginMessage', 'Verificando credenciais...');
+  pinUnlocked = true;
+  showMessage('loginMessage', 'Conferindo autorização do dispositivo...');
   try {
     await ensureFirebase();
-    const credentials = await firebase.signInWithEmailAndPassword(auth, email, password);
-    const adminDoc = await firebase.getDocFromServer(firebase.doc(db, 'pet_grupo6_admins', credentials.user.uid));
-    if (!adminDoc.exists() || adminDoc.data()?.active !== true) {
-      await firebase.signOut(auth);
-      throw new Error('Esta conta não está autorizada. Cadastre seu UID em pet_grupo6_admins no console do Firebase.');
-    }
-    adminUser = credentials.user;
-    $('loginArea').hidden = true;
-    $('adminPanel').hidden = false;
-    $('adminIdentity').textContent = adminUser.email || 'Responsável';
-    $('adminPassword').value = '';
-    showMessage('loginMessage', '');
-    await refreshReport();
-    if (location.hash === '#zerar') {
-      $('resetSection').scrollIntoView({ block: 'start', behavior: 'smooth' });
-    }
+    if (!auth.currentUser) await firebase.signInAnonymously(auth);
+    await authorizeDevice();
   } catch (error) {
-    console.error('Acesso administrativo:', error);
+    console.error('Autorização administrativa:', error);
     showMessage('loginMessage', friendlyError(error));
   } finally {
     button.disabled = false;
@@ -93,18 +117,43 @@ async function signIn(event) {
   }
 }
 
-async function signOut() {
-  try { if (auth && firebase) await firebase.signOut(auth); }
-  catch (error) { console.warn('Erro ao sair:', error); }
+function lockPanel() {
+  // Não desconectar o usuário anônimo: sua identidade é o cadastro do
+  // dispositivo no Firestore. Apenas bloqueie a interface com o PIN.
+  pinUnlocked = false;
   adminUser = null;
   attempts = [];
   loaded = false;
   rowsForExport = [];
   $('adminPanel').hidden = true;
+  $('adminSetup').hidden = true;
   $('loginArea').hidden = false;
-  $('adminEmail').value = '';
   $('adminPassword').value = '';
-  $('adminEmail').focus();
+  showMessage('loginMessage', '');
+  $('adminPassword').focus();
+}
+
+async function recheckAuthorization() {
+  const button = $('checkAuthorization');
+  button.disabled = true;
+  showMessage('setupMessage', 'Verificando autorização no Firebase...');
+  try {
+    await authorizeDevice();
+  } catch (error) {
+    showMessage('setupMessage', friendlyError(error));
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function copyDeviceUid() {
+  const uid = $('adminDeviceUid').textContent;
+  try {
+    await navigator.clipboard.writeText(uid);
+    showMessage('setupMessage', 'Identificador copiado. Cole como ID do documento no Firestore.');
+  } catch {
+    showMessage('setupMessage', 'Selecione e copie manualmente o identificador acima.');
+  }
 }
 
 async function loadCurrentSession() {
@@ -377,7 +426,10 @@ async function resetRanking(event) {
 }
 
 $('loginForm').addEventListener('submit', signIn);
-$('logoutButton').addEventListener('click', signOut);
+$('logoutButton').addEventListener('click', lockPanel);
+$('cancelAuthorization').addEventListener('click', lockPanel);
+$('checkAuthorization').addEventListener('click', recheckAuthorization);
+$('copyAdminUid').addEventListener('click', copyDeviceUid);
 $('reportScope').addEventListener('change', renderReport);
 $('refreshReport').addEventListener('click', refreshReport);
 $('printReport').addEventListener('click', () => {
