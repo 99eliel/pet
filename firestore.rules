@@ -113,7 +113,7 @@ service cloud.firestore {
       allow create: if signedIn()
         && attemptId.size() >= 15 && attemptId.size() <= 80
         && request.resource.data.keys().hasOnly([
-          'sessionId','questionSet','total','correct','answers','submittedBy','createdAt'
+          'sessionId','questionSet','total','correct','answers','submittedBy','createdAt','age'
         ])
         && request.resource.data.keys().hasAll([
           'sessionId','questionSet','total','correct','answers','submittedBy','createdAt'
@@ -130,6 +130,14 @@ service cloud.firestore {
         && request.resource.data.correct is int
         && request.resource.data.correct >= 0
         && request.resource.data.correct <= 10
+        // Optional para não rejeitar tentativas antigas que estão offline,
+        // antes de o cadastro de idade ter sido publicado.
+        && (
+          !request.resource.data.keys().hasAny(['age'])
+          || (request.resource.data.age is int
+            && request.resource.data.age >= 1
+            && request.resource.data.age <= 120)
+        )
         && request.resource.data.submittedBy == request.auth.uid
         && validAnswers(request.resource.data.answers)
         && request.resource.data.createdAt is timestamp
