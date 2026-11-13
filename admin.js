@@ -306,7 +306,16 @@ function renderReport() {
 function downloadCsv() {
   if (!loaded) return;
   const csvCell = value => '"' + String(value).replace(/"/g, '""') + '"';
+  const summary = calculate();
   const rows = [
+    ['Resumo', 'Valor'],
+    ['Período', summary.scope === 'current' ? 'Edição atual' : 'Todas as edições'],
+    ['Partidas concluídas', summary.records.length],
+    ['Partidas com idade informada', summary.ageCount],
+    ['Idade média geral (anos)', summary.ageCount ? (summary.ageSum / summary.ageCount).toFixed(1).replace('.', ',') : ''],
+    ['Respostas analisadas', summary.responseTotal],
+    ['Erros', summary.responseTotal - summary.correctTotal],
+    [],
     ['ID', 'Tema', 'Pergunta', 'Respostas', 'Erros', 'Acertos', 'Taxa de erro (%)', 'Idade média de quem errou (anos)', 'Erros com idade conhecida'],
     ...rowsForExport.map(row => [
       row.id, row.theme.toUpperCase(), row.prompt, row.total,
