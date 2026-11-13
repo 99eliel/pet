@@ -8,8 +8,8 @@ const meanAge = (sum, count) => count ? (sum / count).toFixed(1).replace('.', ',
 const validAge = age => Number.isInteger(age) && age >= 1 && age <= 120;
 const PAGE_SIZE = 250;
 const MAX_ATTEMPTS = 10000;
-// Conveniência visual para o evento, não é um segredo seguro no código público.
-// O Firestore continua exigindo um UID autorizado no servidor.
+// Senha visual para uso único na feira; publicada no frontend.
+// Não protege os dados contra acesso técnico direto ao Firebase.
 const EVENT_PIN = '00000000';
 let pinUnlocked = false;
 let firebase = null;
@@ -25,7 +25,7 @@ let rowsForExport = [];
 function showMessage(id, value) { $(id).textContent = value; }
 function friendlyError(error) {
   if (error?.code === 'auth/too-many-requests') return 'Muitas tentativas de conexão. Tente novamente mais tarde.';
-  if (error?.code === 'permission-denied') return 'Acesso negado pelo Firebase. Confira o cadastro de administrador e as regras do Firestore.';
+  if (error?.code === 'permission-denied') return 'Acesso negado pelo Firebase. Publique a versão atualizada de firestore.rules no projeto petsaude6.';
   if (!navigator.onLine || error?.code === 'unavailable') return 'Sem conexão com o Firebase. Conecte à internet e tente novamente.';
   return 'Não foi possível concluir a operação. ' + (error?.message || 'Verifique as configurações do Firebase.');
 }
@@ -39,7 +39,7 @@ async function ensureFirebase() {
       query, orderBy, limit, startAfter, setDoc, serverTimestamp
     },
     {
-      getAuth, signInAnonymously, setPersistence, browserLocalPersistence
+      getAuth, signInAnonymously
     }
   ] = await Promise.all([
     import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js'),
@@ -51,43 +51,13 @@ async function ensureFirebase() {
     || initializeApp(firebaseConfig, appName);
   db = getFirestore(app);
   auth = getAuth(app);
-  // O UID anônimo precisa continuar igual depois de fechar/reabrir o navegador.
-  // Caso contrário seria necessário autorizar o dispositivo toda vez.
-  await setPersistence(auth, browserLocalPersistence);
-  if (typeof auth.authStateReady === 'function') await auth.authStateReady();
+  // A autenticação anônima é automática e invisível; nenhum e-mail ou
+  // autorização individual de navegador é necessária.
   firebase = {
     doc, getDocFromServer, getDocsFromServer, collection, query,
     orderBy, limit, startAfter, setDoc, serverTimestamp,
     signInAnonymously
   };
-}
-
-async function authorizeDevice() {
-  const user = auth?.currentUser;
-  if (!user || !pinUnlocked) throw new Error('Digite a senha para acessar o painel.');
-  const adminDoc = await firebase.getDocFromServer(firebase.doc(db, 'pet_grupo6_admins', user.uid));
-  if (!adminDoc.exists() || adminDoc.data()?.active !== true) {
-    adminUser = null;
-    $('loginArea').hidden = true;
-    $('adminPanel').hidden = true;
-    $('adminSetup').hidden = false;
-    $('adminDeviceUid').textContent = user.uid;
-    showMessage('setupMessage', 'Faça a autorização uma vez no Firebase e toque em “Já autorizei, verificar”.');
-    return false;
-  }
-
-  adminUser = user;
-  $('loginArea').hidden = true;
-  $('adminSetup').hidden = true;
-  $('adminPanel').hidden = false;
-  $('adminIdentity').textContent = 'Este navegador';
-  $('adminPassword').value = '';
-  showMessage('loginMessage', '');
-  await refreshReport();
-  if (location.hash === '#zerar') {
-    $('resetSection').scrollIntoView({ block: 'start', behavior: 'smooth' });
-  }
-  return true;
 }
 
 async function signIn(event) {
@@ -102,14 +72,28 @@ async function signIn(event) {
   }
 
   button.disabled = true;
-  pinUnlocked = true;
-  showMessage('loginMessage', 'Conferindo autorização do dispositivo...');
+  showMessage('loginMessage', 'Abrindo painel...');
   try {
     await ensureFirebase();
     if (!auth.currentUser) await firebase.signInAnonymously(auth);
-    await authorizeDevice();
+    if (!auth.currentUser) throw new Error('Não foi possível conectar ao Firebase.');
+    pinUnlocked = true;
+    adminUser = auth.currentUser;
+    $('loginArea').hidden = true;
+    $('adminPanel').hidden = false;
+    $('adminIdentity').textContent = 'Acesso à feira';
+    $('adminPassword').value = '';
+    showMessage('loginMessage', '');
+    await refreshReport();
+    if (location.hash === '#zerar') {
+      $('resetSection').scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
   } catch (error) {
-    console.error('Autorização administrativa:', error);
+    console.error('Acesso ao painel:', error);
+    pinUnlocked = false;
+    adminUser = null;
+    $('loginArea').hidden = false;
+    $('adminPanel').hidden = true;
     showMessage('loginMessage', friendlyError(error));
   } finally {
     button.disabled = false;
@@ -118,42 +102,16 @@ async function signIn(event) {
 }
 
 function lockPanel() {
-  // Não desconectar o usuário anônimo: sua identidade é o cadastro do
-  // dispositivo no Firestore. Apenas bloqueie a interface com o PIN.
   pinUnlocked = false;
   adminUser = null;
   attempts = [];
   loaded = false;
   rowsForExport = [];
   $('adminPanel').hidden = true;
-  $('adminSetup').hidden = true;
   $('loginArea').hidden = false;
   $('adminPassword').value = '';
   showMessage('loginMessage', '');
   $('adminPassword').focus();
-}
-
-async function recheckAuthorization() {
-  const button = $('checkAuthorization');
-  button.disabled = true;
-  showMessage('setupMessage', 'Verificando autorização no Firebase...');
-  try {
-    await authorizeDevice();
-  } catch (error) {
-    showMessage('setupMessage', friendlyError(error));
-  } finally {
-    button.disabled = false;
-  }
-}
-
-async function copyDeviceUid() {
-  const uid = $('adminDeviceUid').textContent;
-  try {
-    await navigator.clipboard.writeText(uid);
-    showMessage('setupMessage', 'Identificador copiado. Cole como ID do documento no Firestore.');
-  } catch {
-    showMessage('setupMessage', 'Selecione e copie manualmente o identificador acima.');
-  }
 }
 
 async function loadCurrentSession() {
@@ -427,9 +385,6 @@ async function resetRanking(event) {
 
 $('loginForm').addEventListener('submit', signIn);
 $('logoutButton').addEventListener('click', lockPanel);
-$('cancelAuthorization').addEventListener('click', lockPanel);
-$('checkAuthorization').addEventListener('click', recheckAuthorization);
-$('copyAdminUid').addEventListener('click', copyDeviceUid);
 $('reportScope').addEventListener('change', renderReport);
 $('refreshReport').addEventListener('click', refreshReport);
 $('printReport').addEventListener('click', () => {
