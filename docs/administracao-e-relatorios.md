@@ -6,6 +6,24 @@ Este documento descreve a nova interface disponível em:
 
 Na tela inicial do quiz, na seção do Top 5, aparecem os botões **Gerar relatório** e **Zerar placar**. Os dois exigem autenticação administrativa.
 
+## Nova coleta de idade
+
+Na identificação do participante, o quiz solicita **nome/apelido e idade**. O campo de idade usa teclado numérico no tablet e aceita números inteiros de 1 a 120. A idade não é exibida no Top 5.
+
+Nas **novas partidas concluídas**, o registro privado em `pet_grupo6_tentativas/{id}` pode conter o campo `age` (inteiro de 1 a 120). Ele fica junto às respostas, **sem nome/apelido**, e só é disponibilizado aos responsáveis autorizados pelas regras do Firestore.
+
+O relatório inclui:
+- idade média de todas as partidas com idade conhecida (soma das idades ÷ total de partidas com idade conhecida);
+- número de partidas com idade conhecida para contextualizar a média;
+- idade média de quem **errou cada pergunta**, calculada só entre os erros daquela questão com idade conhecida;
+- essas médias nas exportações PDF (impressão) e CSV, além dos números de erros/acertos.
+
+**Importante:** partidas anteriores que não têm `age` ficam de fora das médias; nenhum valor será inventado. Partidas antigas com respostas ainda contribuem para taxas de erro. Cada partida conta uma vez nas médias, mesmo que seja de uma pessoa que já participou, portanto não se trata de participantes únicos.
+
+### Compatibilidade de regras e offline
+
+É necessário **republicar `firestore.rules`** para admitir o novo campo `age`; caso contrário, o Firestore rejeitará novas tentativas. A regra aceita idade ausente apenas para sincronizar partidas de versões anteriores que ainda estejam guardadas no tablet offline. O nome segue armazenado apenas no ranking, e não no documento analítico de tentativa.
+
 ## 1. Como funciona o relatório
 
 Cada partida **concluída após esta atualização** armazena, no Firestore, um documento de respostas em `pet_grupo6_tentativas/{id}` contendo:
