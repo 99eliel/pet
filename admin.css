@@ -216,3 +216,19 @@ html[data-theme="dark"] .admin-footer{color:#a0c5ba}
   .admin-table th:nth-child(7) {width:16%!important;}
   .admin-table td:last-child {min-width:0;white-space:normal!important;}
 }
+
+/* Configuração única do navegador autorizado, sem cadastro de e-mail. */
+#adminSetup .admin-uid-label {
+  display:block; font-size:12px; font-weight:800; margin-bottom:9px;
+}
+#adminSetup .admin-uid {
+  display:block; padding:14px; margin-bottom:12px; font:700 13px/1.6 monospace;
+  word-break:break-all; user-select:all; border-radius:10px;
+  background:#f0f7f3; color:#1c5545; border:1px solid #c9e2d1;
+}
+#adminSetup .admin-setup-button {width:100%;min-height:50px;margin:0 0 12px;}
+#adminSetup p strong {color:inherit;}
+#adminSetup p code {overflow-wrap:anywhere;}
+html[data-theme="dark"] #adminSetup .admin-uid {
+  background:#193f39; color:#c8f5da; border-color:#3f7863;
+}
