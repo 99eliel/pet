@@ -1,5 +1,22 @@
 # Quiz PET Saúde — Raízes Digitais
 
+## Idade dos participantes e estatística de erros
+
+O cadastro do visitante agora pergunta **nome/apelido e idade** (campo numérico que abre teclado numérico no tablet). O jogo aceita idades inteiras entre **1 e 120 anos** e limpa o campo ao iniciar o cadastro de outro participante.
+
+A idade **não aparece no ranking nem acompanha o nome no documento público de pontuação**. Ela é gravada apenas no documento privado de tentativa concluída em `pet_grupo6_tentativas`, junto com os IDs das questões e os indicadores de acerto/erro, sob as regras de acesso administrativo.
+
+O relatório em `admin.html` mostra:
+- **idade média geral**, calculada somente com as partidas concluídas que possuem idade informada;
+- **total de partidas com idade conhecida**, para dar contexto à média;
+- **taxa e quantidade de erros por questão**;
+- **idade média das pessoas que erraram cada questão**, com o número de idades disponíveis por pergunta;
+- tudo também na versão de impressão/PDF e na exportação CSV.
+
+**Partidas antigas, sem idade**, continuam válidas para os cálculos de taxa de erros quando tiverem respostas registradas, mas não entram nas médias de idade. Uma pessoa pode jogar mais de uma vez; portanto, as médias representam **partidas do estande**, não participantes únicos ou uma amostra da população geral.
+
+**Obrigatório antes da feira:** publicar no Firebase Console a nova versão de [firestore.rules](firestore.rules), que passa a aceitar a idade apenas na coleção privada de tentativas, validando valores entre 1 e 120. O campo é opcional nas regras para que as partidas antigas ainda pendentes no armazenamento offline do tablet possam ser sincronizadas. Depois, abra o PWA com internet e recarregue (cache v14).
+
 ## Gestão do placar e relatório de erros
 
 A tela inicial agora possui os botões **Gerar relatório** e **Zerar placar**, que abrem o painel restrito `admin.html`.
