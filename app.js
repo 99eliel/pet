@@ -15,6 +15,7 @@ let leaderboardPromise = null;
 let currentRanking = [];
 let rankingMode = 'local';
 let player = '';
+let participantAge = null;
 let questionIndex = 0;
 let totalScore = 0;
 let correctAnswers = 0;
@@ -100,6 +101,7 @@ function goHome() {
   clearQuestionTimers();
   clearResultTimeout();
   player = '';
+  participantAge = null;
   showView('homeView');
   leaderboardStore?.refresh();
 }
@@ -108,9 +110,12 @@ function openSetup() {
   clearQuestionTimers();
   clearResultTimeout();
   player = '';
+  participantAge = null;
   showView('setupView');
   $('nameError').textContent = '';
+  $('ageError').textContent = '';
   $('playerName').value = '';
+  $('playerAge').value = '';
   $('playerName').focus();
 }
 
@@ -136,7 +141,15 @@ function beginQuiz() {
     $('playerName').focus();
     return;
   }
+  const rawAge = $('playerAge').value.trim();
+  const age = Number(rawAge);
+  if (!/^\d{1,3}$/.test(rawAge) || !Number.isInteger(age) || age < 1 || age > 120) {
+    $('ageError').textContent = 'Informe uma idade válida, de 1 a 120 anos.';
+    $('playerAge').focus();
+    return;
+  }
   player = proposedName.slice(0, 28);
+  participantAge = age;
   questions = buildQuestionRound();
   roundSessionId = leaderboardStore?.sessionId || 'legado';
   roundAnswers = [];
@@ -276,6 +289,7 @@ async function finishQuiz() {
 
   const record = {
     name: player,
+    age: participantAge,
     score: totalScore,
     correct: correctAnswers,
     total: questions.length,
@@ -328,6 +342,7 @@ function setupEventHandlers() {
   document.querySelectorAll('[data-go-home]').forEach(button => button.addEventListener('click', goHome));
   $('playerForm').addEventListener('submit', event => { event.preventDefault(); beginQuiz(); });
   $('playerName').addEventListener('input', () => { $('nameError').textContent = ''; });
+  $('playerAge').addEventListener('input', () => { $('ageError').textContent = ''; });
   $('playAgain').addEventListener('click', openSetup);
   $('nextQuestion').addEventListener('click', advanceAfterFeedback);
   $('backToHome').addEventListener('click', goHome);
