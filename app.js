@@ -143,13 +143,13 @@ function beginQuiz() {
   }
   const rawAge = $('playerAge').value.trim();
   const age = Number(rawAge);
-  if (!/^\d{1,3}$/.test(rawAge) || !Number.isInteger(age) || age < 1 || age > 120) {
-    $('ageError').textContent = 'Informe uma idade válida, de 1 a 120 anos.';
+  if (rawAge && (!/^\d{1,3}$/.test(rawAge) || !Number.isInteger(age) || age < 1 || age > 120)) {
+    $('ageError').textContent = 'Se informar a idade, use um número entre 1 e 120.';
     $('playerAge').focus();
     return;
   }
   player = proposedName.slice(0, 28);
-  participantAge = age;
+  participantAge = rawAge ? age : null;
   questions = buildQuestionRound();
   roundSessionId = leaderboardStore?.sessionId || 'legado';
   roundAnswers = [];
