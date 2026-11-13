@@ -1,5 +1,8 @@
 # Quiz PET Saúde — Raízes Digitais
 
+> **Acesso administrativo simplificado:** senha numérica **00000000**, sem e-mail. O cadastro de um UID anônimo do navegador no Firestore é feito apenas na primeira utilização. O PIN é público no código do site; a autorização do UID é a proteção efetiva. Utilize o painel em um dispositivo da equipe.
+
+
 ## Participação por QR Code e idade opcional
 
 Na tela inicial há agora o botão **Responder pelo celular**. Ele abre uma janela com QR Code grande que aponta para o endereço público fixo **https://99eliel.github.io/pet/**. O QR é desenhado localmente pelo arquivo `qr.js` (codificação QR pré-calculada) e **não utiliza serviços externos nem precisa de internet no tablet para aparecer**. O participante precisa de internet no celular para abrir o site. O quiz funciona no navegador do celular, usando o **mesmo ranking Firebase e os mesmos registros de desempenho** do tablet. A janela inclui link clicável e opção de copiar o endereço. Se o site mudar de domínio no futuro, atualize o endereço e a matriz QR.
@@ -37,10 +40,10 @@ A tela inicial agora possui os botões **Gerar relatório** e **Zerar placar**, 
 - **Zerar placar:** inicia uma nova edição, deixando o Top 5 vazio, sem apagar o histórico de respostas e as pontuações anteriores.
 - **Gerar relatório:** calcula taxa de erro por pergunta, total de respostas, acertos e erros, e desempenho por LGPD/SUS. Oferece **Salvar como PDF** pela impressão do navegador e **CSV** para Excel.
 - Os registros de erros são feitos **a partir desta versão e apenas para partidas concluídas**. Pontuações antigas não permitem identificar quais perguntas foram erradas.
-- O painel exige conta autorizada do Firebase com e-mail/senha; a confirmação de reset exige digitar **ZERAR**.
+- O painel agora pede **somente a senha numérica 00000000**. Não é necessário criar e-mail. O navegador da equipe deve ser autorizado uma única vez por UID anônimo no Firestore; o reset ainda exige **ZERAR**.
 - Os resultados analíticos são armazenados sem o nome do participante. O ranking público continua exibindo apenas os nomes/apelidos e pontos.
 
-**ATIVAÇÃO OBRIGATÓRIA NO FIREBASE:** as novas regras **não** são publicadas automaticamente ao atualizar o GitHub. É necessário publicar o arquivo [firestore.rules](firestore.rules), habilitar autenticação por Email/Password e criar um documento administrativo de autorização no Firebase Console. Veja as instruções detalhadas em **[Administração e relatórios](docs/administracao-e-relatorios.md)** antes de utilizar as funções. O login anônimo dos participantes deve continuar habilitado.
+**ATIVAÇÃO OBRIGATÓRIA NO FIREBASE:** publique [firestore.rules](firestore.rules), mantenha **Authentication Anônimo** habilitado e autorize o UID do navegador da equipe com `active: true` em `pet_grupo6_admins`. Na primeira abertura de `admin.html`, após digitar **00000000**, o próprio painel mostra o UID e explica como autorizar. Nas visitas seguintes basta a senha. Veja [Administração e relatórios](docs/administracao-e-relatorios.md).
 
 
 > **Revisão das perguntas (12/11/2026):** as 40 questões passaram por revisão editorial de clareza. A orientação sobre suspeita de infarto agora cita o SAMU 192; alternativas e explicações foram ajustadas, e o sorteio evita assuntos repetidos na mesma partida. Confira [a revisão detalhada](docs/revisao-questoes.md). Os registros já existentes no ranking não foram apagados. Para atualizar o PWA instalado no tablet, abra-o conectado à internet e recarregue a página.
