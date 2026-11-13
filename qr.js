@@ -49,6 +49,7 @@ const MATRIX = [
 const dialog = document.getElementById('qrDialog');
 const openButton = document.getElementById('openQrButton');
 const closeButton = document.getElementById('closeQrButton');
+const doneButton = document.getElementById('qrDoneButton');
 const qrContainer = document.getElementById('quizQrImage');
 const copyButton = document.getElementById('copyQuizLink');
 const copyMessage = document.getElementById('qrCopyMessage');
@@ -106,6 +107,7 @@ function closeDialog() {
 }
 
 closeButton?.addEventListener('click', closeDialog);
+doneButton?.addEventListener('click', closeDialog);
 dialog?.addEventListener('click', event => {
   if (event.target === dialog) closeDialog();
 });
