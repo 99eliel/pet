@@ -289,8 +289,11 @@ export function startLeaderboard({ config, onChange, onMode }) {
     refresh() { emit(); if (authenticated) syncPending().catch(console.warn); else connect(); },
 
     async save(result) {
-      if (!Number.isInteger(result.age) || result.age < 1 || result.age > 120) {
-        throw new Error('Informe uma idade válida antes de iniciar o quiz.');
+      // A idade é voluntária. Se não for preenchida, não haverá média
+      // atribuída a esta partida; suas respostas continuam no relatório.
+      if (result.age != null &&
+        (!Number.isInteger(result.age) || result.age < 1 || result.age > 120)) {
+        throw new Error('Idade informada inválida.');
       }
       const sid = validSession(result.sessionId) ? result.sessionId : sessionId;
       if (!Array.isArray(result.answers) || result.answers.length !== 10 ||
