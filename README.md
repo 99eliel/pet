@@ -1,5 +1,8 @@
 # Quiz PET Saúde — Raízes Digitais
 
+> **Ranking completo:** a tela inicial agora mostra **todos os participantes classificados**, não apenas os cinco primeiros. A lista permite rolagem, mostra o total de nomes e carrega as pontuações do Firebase em lotes de 100, respeitando as regras existentes. Quando a pessoa participa mais de uma vez usando o mesmo nome, continua sendo exibido **o melhor resultado por nome**. Não houve alterações no Firestore, no banco, na pontuação ou nos relatórios. Para receber a versão nova, atualize o PWA entre as partidas.
+
+
 > **Atualização da feira:** o resultado final e a pontuação agora permanecem visíveis até o participante clicar em **Voltar ao início**. Não há contagem regressiva. Atualize o PWA entre as partidas para receber a versão `pet-grupo6-feira-pwa-v19`. Nenhuma mudança de Firebase foi necessária.
 
 ## Tela cheia para o tablet
@@ -50,7 +53,7 @@ O relatório em `admin.html` mostra:
 
 A tela inicial agora possui os botões **Gerar relatório** e **Zerar placar**, que abrem o painel restrito `admin.html`.
 
-- **Zerar placar:** inicia uma nova edição, deixando o Top 5 vazio, sem apagar o histórico de respostas e as pontuações anteriores.
+- **Zerar placar:** inicia uma nova edição, deixando o ranking vazio, sem apagar o histórico de respostas e as pontuações anteriores.
 - **Gerar relatório:** calcula taxa de erro por pergunta, total de respostas, acertos e erros, e desempenho por LGPD/SUS. Oferece **Salvar como PDF** pela impressão do navegador e **CSV** para Excel.
 - Os registros de erros são feitos **a partir desta versão e apenas para partidas concluídas**. Pontuações antigas não permitem identificar quais perguntas foram erradas.
 - O painel pede **somente a senha numérica 00000000**. Não é necessário e-mail nem autorização do dispositivo. O reset ainda exige digitar **ZERAR** para confirmação.
@@ -87,7 +90,7 @@ O uso do PWA continua disponível, e o quiz mantém ranking Firebase e respostas
 - Cada acerto vale **100 pontos + até 100 pontos de bônus**. O bônus diminui gradualmente, mas a pergunta nunca expira.
 - Erros valem zero. Depois de cada resposta, o visitante lê uma explicação curta e toca para avançar.
 - O resultado permanece na tela **sem limite de tempo** e só retorna à página inicial ao tocar em **Voltar ao início**.
-- Ranking Top 5 por pontuação; quando o nome se repete, a melhor partida é exibida.
+- Ranking completo por pontuação; quando o nome se repete, a melhor partida é exibida. O painel mostra a lista inteira com rolagem.
 
 ## Firebase configurado
 Projeto Firebase da organização: **petsaude6**.
@@ -112,7 +115,7 @@ A configuração do SDK está em `firebase-config.js`. A chave da configuração
 5. Em **Authentication → Settings → Authorized domains**, conferir `99eliel.github.io` caso o seu método de login exija autorização de domínio.
 6. Abrir o site https://99eliel.github.io/pet/ no tablet com internet e recarregar.
 7. Confirmar na tela a mensagem **Firebase conectado**, completar uma partida e verificar que um documento foi criado na coleção `pet_grupo6_ranking` do Firestore.
-8. Abrir a página em outro navegador/aparelho e confirmar que o Top 5 é compartilhado.
+8. Abrir a página em outro navegador/aparelho e confirmar que o ranking completo é compartilhado.
 9. Testar offline: desativar Wi-Fi, responder, reativar Wi-Fi e conferir a sincronização.
 
 Se aparecer “Firebase indisponível” ou “Conectando” sem finalizar, confira o projeto, Authentication anônimo, Firestore, regras e rede. O quiz continuará jogável e os novos resultados ficarão guardados localmente.
