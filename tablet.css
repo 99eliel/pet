@@ -505,3 +505,51 @@ html:fullscreen body.is-result > main.container {min-height:100dvh;}
   .header-actions .fullscreen-toggle {min-height:58px;font-size:15px;}
   .fullscreen-toggle-quiz {width:55px;height:55px;min-height:55px;}
 }
+
+
+/* Ranking completo: todos os classificados aparecem em lista com rolagem.
+   Não aumenta a altura do cartão indefinidamente no tablet. */
+.ranking .rank-description {
+  margin-bottom: 15px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.ranking .leaderboard-list {
+  flex: 0 1 auto;
+  min-height: 120px;
+  max-height: clamp(310px, 56dvh, 680px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #82b8a3 transparent;
+  padding-right: 6px;
+  padding-bottom: 3px;
+}
+.ranking .leaderboard-list:focus-visible {
+  outline: 3px solid #70bf94;
+  outline-offset: 3px;
+}
+.ranking .leaderboard-list li {
+  flex: 0 0 auto;
+}
+.ranking .leaderboard-list li.rank-podium {
+  border-color: #d6e6bd;
+}
+.ranking .rank-number {
+  width: 34px;
+  min-width: 34px;
+  font-variant-numeric: tabular-nums;
+}
+html[data-theme="dark"] .ranking .leaderboard-list {
+  scrollbar-color: #4f8875 transparent;
+}
+html[data-theme="dark"] .ranking .leaderboard-list li.rank-podium {
+  border-color: #4e7661;
+}
+@media (max-width: 600px) {
+  .ranking .leaderboard-list {
+    max-height: min(54dvh, 530px);
+    min-height: 180px;
+  }
+  .ranking .rank-description { font-size: 12px; }
+}
