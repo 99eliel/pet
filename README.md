@@ -1,5 +1,16 @@
 # Quiz PET Saúde — Raízes Digitais
 
+## Tela cheia para o tablet
+
+Na tela inicial, há um botão **Tela cheia** ao lado do seletor de tema; durante as perguntas existe um botão compacto com o símbolo ⛶ junto à pontuação, e no resultado é possível alternar novamente. O modo utiliza a **Fullscreen API** do navegador e retorna à visualização normal ao tocar **Sair da tela cheia** ou usar o controle de saída do Android/navegador.
+
+A mudança é **somente visual**: nenhuma alteração foi feita no Firebase, nas regras Firestore, no cadastro, nos pontos, nas respostas ou nos relatórios. O PWA continua instalável. O arquivo `fullscreen.js` também é armazenado offline pelo service worker `pet-grupo6-feira-pwa-v18`.
+
+**Limitação:** alguns navegadores/tablets impedem que uma página web esconda completamente as barras do Android. Nesse caso o próprio quiz explica que é melhor instalar o PWA e abri-lo pelo ícone da tela inicial; a Fullscreen API não consegue forçar a ocultação de controles do sistema. Por segurança, a entrada em tela cheia só ocorre por ação direta do usuário, nunca automaticamente.
+
+Para atualizar um tablet já instalado: abra o quiz conectado à internet, recarregue e confira o novo botão. Evite recarregar enquanto alguém estiver respondendo.
+
+
 > **Relatórios e reset:** abra `admin.html` e digite **00000000**, sem e-mail, UID ou cadastro de administrador. Para ativar as funções, publique [firestore.rules](firestore.rules). **Importante:** o PIN é somente uma barreira visual; as regras simplificadas permitem consultar idades/respostas e reiniciar o placar por API sem a senha. Consulte os [cuidados de privacidade](docs/administracao-e-relatorios.md).
 
 
