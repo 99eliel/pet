@@ -22,7 +22,6 @@ let correctAnswers = 0;
 let totalAnswerTimeMs = 0;
 let questionStartedAt = 0;
 let frameId = null;
-let resultTimeoutId = null;
 let questionLocked = true;
 
 function showView(viewName) {
@@ -99,7 +98,6 @@ function setRankingMode(mode, pendingCount = 0) {
 
 function goHome() {
   clearQuestionTimers();
-  clearResultTimeout();
   player = '';
   participantAge = null;
   showView('homeView');
@@ -108,7 +106,6 @@ function goHome() {
 
 function openSetup() {
   clearQuestionTimers();
-  clearResultTimeout();
   player = '';
   participantAge = null;
   showView('setupView');
@@ -117,13 +114,6 @@ function openSetup() {
   $('playerName').value = '';
   $('playerAge').value = '';
   $('playerName').focus();
-}
-
-function clearResultTimeout() {
-  if (resultTimeoutId !== null) {
-    clearTimeout(resultTimeoutId);
-    resultTimeoutId = null;
-  }
 }
 
 function clearQuestionTimers() {
@@ -284,8 +274,6 @@ async function finishQuiz() {
   $('totalTime').textContent = (totalAnswerTimeMs / 1000).toFixed(1).replace('.', ',') + 's';
   $('rankPosition').textContent = '—';
   $('saveMessage').textContent = 'Registrando sua pontuação...';
-  clearResultTimeout();
-  resultTimeoutId = setTimeout(goHome, quizConfig.resultResetSeconds * 1000);
 
   const record = {
     name: player,
@@ -343,7 +331,6 @@ function setupEventHandlers() {
   $('playerForm').addEventListener('submit', event => { event.preventDefault(); beginQuiz(); });
   $('playerName').addEventListener('input', () => { $('nameError').textContent = ''; });
   $('playerAge').addEventListener('input', () => { $('ageError').textContent = ''; });
-  $('playAgain').addEventListener('click', openSetup);
   $('nextQuestion').addEventListener('click', advanceAfterFeedback);
   $('backToHome').addEventListener('click', goHome);
   $('refreshRanking').addEventListener('click', () => leaderboardStore?.refresh());
@@ -362,7 +349,7 @@ function initialize() {
   $('maxResultScore').textContent = number(maxScore);
   $('demoNotice').hidden = !quizConfig.isDemo;
   $('questionTotal').textContent = '/ ' + roundSize;
-  $('resultAutoReset').textContent = 'A tela volta ao início automaticamente após ' + quizConfig.resultResetSeconds + ' segundos.';
+  $('resultAutoReset').textContent = 'Sua pontuação permanecerá nesta tela até tocar em Voltar ao início.';
   $('currentYear').textContent = new Date().getFullYear();
   setupLogo();
   setupEventHandlers();
