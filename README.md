@@ -1,5 +1,7 @@
 # Quiz PET Saúde — Raízes Digitais
 
+> **Atualização da feira:** o resultado final e a pontuação agora permanecem visíveis até o participante clicar em **Voltar ao início**. Não há contagem regressiva. Atualize o PWA entre as partidas para receber a versão `pet-grupo6-feira-pwa-v19`. Nenhuma mudança de Firebase foi necessária.
+
 ## Tela cheia para o tablet
 
 Na tela inicial, há um botão **Tela cheia** ao lado do seletor de tema; durante as perguntas existe um botão compacto com o símbolo ⛶ junto à pontuação, e no resultado é possível alternar novamente. O modo utiliza a **Fullscreen API** do navegador e retorna à visualização normal ao tocar **Sair da tela cheia** ou usar o controle de saída do Android/navegador.
@@ -74,7 +76,7 @@ Após as orientações do professor, a interface passou a priorizar o **uso da �
 - O **tema escuro é o padrão**, com opção **Tema claro** na parte superior da tela inicial. A escolha é salva no próprio aparelho. A economia de bateria depende do tipo de tela do tablet.
 - As **12 perguntas de múltipla escolha**, elaboradas para completar o formato do quiz, estão relacionadas em **[docs/perguntas-multipla-escolha.md](docs/perguntas-multipla-escolha.md)** com todas as alternativas, respostas e explicações para revisão da equipe.
 
-O uso do PWA continua disponível, e o quiz mantém ranking Firebase, respostas sem tempo limite e retorno automático em cinco segundos após o resultado.
+O uso do PWA continua disponível, e o quiz mantém ranking Firebase e respostas sem tempo limite. A pontuação final permanece na tela até tocar em **Voltar ao início**.
 
 **Atualização em tablet já instalado:** abrir o PWA com conexão à internet, recarregar a página e conferir a versão; o service worker `pet-grupo6-feira-pwa-v10` armazena o novo CSS, o script de tema e a logo. Faça uma partida completa em modo claro/escuro e também com Wi-Fi desligado antes da feira.
 
@@ -84,7 +86,7 @@ O uso do PWA continua disponível, e o quiz mantém ranking Firebase, respostas 
 - **Não existe limite de tempo por pergunta.** O relógio conta apenas para definir o bônus de rapidez.
 - Cada acerto vale **100 pontos + até 100 pontos de bônus**. O bônus diminui gradualmente, mas a pergunta nunca expira.
 - Erros valem zero. Depois de cada resposta, o visitante lê uma explicação curta e toca para avançar.
-- O resultado aparece por **5 segundos** antes de voltar automaticamente à tela inicial.
+- O resultado permanece na tela **sem limite de tempo** e só retorna à página inicial ao tocar em **Voltar ao início**.
 - Ranking Top 5 por pontuação; quando o nome se repete, a melhor partida é exibida.
 
 ## Firebase configurado
