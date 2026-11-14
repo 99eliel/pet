@@ -86,6 +86,13 @@ export function startLeaderboard({ config, onChange, onMode }) {
   let legacyLocal = readArray(OLD_LOCAL_KEY);
   let legacyQueue = readArray(OLD_QUEUE_KEY);
   let remote = [];
+  let firstPage = [];
+  let firstPageDocs = [];
+  let remainingPages = [];
+  let lastPageSignature = '';
+  let pageRequestId = 0;
+  let loadingRemaining = false;
+  let remainingError = false;
   let db = null;
   let auth = null;
   let api = null;
@@ -111,7 +118,10 @@ export function startLeaderboard({ config, onChange, onMode }) {
     return pendingCount() ? 'pendente' : 'online';
   }
   function emit() {
-    onChange(rankEntries([...remote, ...localFor(sessionId)]), mode());
+    onChange(rankEntries([...remote, ...localFor(sessionId)]), mode(), {
+      loadingMore: loadingRemaining,
+      loadError: remainingError || (!scoreServerLoaded && firstPageDocs.length === 100)
+    });
     onMode(mode(), pendingCount());
   }
   function saveQueue() {
@@ -119,26 +129,92 @@ export function startLeaderboard({ config, onChange, onMode }) {
     persist(QUEUE_KEY, queue);
   }
 
+  // Consulta em lotes de 100: as regras atuais do Firestore permitem
+  // somente consultas limitadas a 100 documentos por vez. Não é preciso
+  // alterar as regras nem a estrutura do banco para mostrar todos.
+  async function loadRemainingScores(current, documents) {
+    const requestId = ++pageRequestId;
+    remainingPages = [];
+    remainingError = false;
+    loadingRemaining = documents.length === 100;
+    remote = [...firstPage];
+    emit();
+    if (!loadingRemaining || !navigator.onLine) return;
+
+    let cursor = documents[documents.length - 1];
+    try {
+      while (cursor && current === sessionId && requestId === pageRequestId) {
+        const next = api.query(
+          sessionCollection(db, api, current),
+          api.orderBy('score', 'desc'),
+          api.startAfter(cursor),
+          api.limit(100)
+        );
+        const snapshot = await api.getDocsFromServer(next);
+        if (current !== sessionId || requestId !== pageRequestId) return;
+        remainingPages.push(...snapshot.docs.map(item => ({ id: item.id, ...item.data() })));
+        remote = [...firstPage, ...remainingPages];
+        loadingRemaining = snapshot.size === 100;
+        emit();
+        if (snapshot.size < 100) break;
+        cursor = snapshot.docs[snapshot.docs.length - 1];
+      }
+    } catch (error) {
+      if (current !== sessionId || requestId !== pageRequestId) return;
+      remainingError = true;
+      console.warn('Não foi possível carregar todo o ranking:', error);
+    } finally {
+      if (current === sessionId && requestId === pageRequestId) {
+        loadingRemaining = false;
+        emit();
+      }
+    }
+  }
+
   function subscribeScores() {
     unsubscribeScores?.();
+    ++pageRequestId; // Interrompe consultas da edição anterior.
     remote = [];
+    firstPage = [];
+    firstPageDocs = [];
+    remainingPages = [];
+    lastPageSignature = '';
+    loadingRemaining = false;
+    remainingError = false;
     scoreServerLoaded = false;
     emit();
     if (!authenticated || !db) return;
     const current = sessionId;
-    const top = api.query(sessionCollection(db, api, current),
-      api.orderBy('score', 'desc'), api.limit(100));
+    const top = api.query(
+      sessionCollection(db, api, current),
+      api.orderBy('score', 'desc'),
+      api.limit(100)
+    );
     unsubscribeScores = api.onSnapshot(top, { includeMetadataChanges: true }, snapshot => {
       if (current !== sessionId) return;
-      remote = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+      firstPageDocs = snapshot.docs;
+      firstPage = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+      remote = [...firstPage, ...remainingPages];
       scoreServerLoaded = !snapshot.metadata.fromCache;
       lastError = '';
       emit();
-      if (scoreServerLoaded) syncPending().catch(console.warn);
+
+      if (scoreServerLoaded) {
+        const fingerprint = firstPage.map(item =>
+          item.id + ':' + item.score + ':' + item.elapsedMs).join('|');
+        // Evita fazer as mesmas leituras novamente quando mudar apenas
+        // o estado de cache/metadados do snapshot.
+        if (fingerprint !== lastPageSignature) {
+          lastPageSignature = fingerprint;
+          loadRemainingScores(current, snapshot.docs).catch(console.warn);
+        }
+        syncPending().catch(console.warn);
+      }
     }, error => {
       if (current !== sessionId) return;
       lastError = error?.code || String(error);
       scoreServerLoaded = false;
+      remainingError = true;
       console.error('Não foi possível consultar o ranking:', error);
       emit();
     });
@@ -253,7 +329,8 @@ export function startLeaderboard({ config, onChange, onMode }) {
           { initializeApp, getApps, getApp },
           {
             getFirestore, collection, doc, query, orderBy, limit, onSnapshot,
-            writeBatch, serverTimestamp, getDocFromServer
+            writeBatch, serverTimestamp, getDocFromServer,
+            getDocsFromServer, startAfter
           },
           { getAuth, signInAnonymously }
         ] = await Promise.all([
@@ -265,7 +342,10 @@ export function startLeaderboard({ config, onChange, onMode }) {
           ? getApp() : initializeApp(firebaseConfig);
         db = getFirestore(app);
         auth = getAuth(app);
-        api = { collection, doc, query, orderBy, limit, onSnapshot, writeBatch, serverTimestamp, getDocFromServer };
+        api = {
+          collection, doc, query, orderBy, limit, onSnapshot, writeBatch,
+          serverTimestamp, getDocFromServer, getDocsFromServer, startAfter
+        };
         if (!auth.currentUser) await signInAnonymously(auth);
         authenticated = Boolean(auth.currentUser);
         lastError = '';
@@ -286,7 +366,17 @@ export function startLeaderboard({ config, onChange, onMode }) {
     get mode() { return mode(); },
     get sessionId() { return sessionId; },
     get pendingCount() { return pendingCount(); },
-    refresh() { emit(); if (authenticated) syncPending().catch(console.warn); else connect(); },
+    refresh() {
+      emit();
+      if (authenticated) {
+        syncPending().catch(console.warn);
+        // Se houver mais de 100 registros, busca novamente as páginas
+        // seguintes ao tocar em Atualizar, inclusive novos participantes.
+        if (firstPageDocs.length === 100 && navigator.onLine) {
+          loadRemainingScores(sessionId, firstPageDocs).catch(console.warn);
+        }
+      } else connect();
+    },
 
     async save(result) {
       // A idade é voluntária. Se não for preenchida, não haverá média
