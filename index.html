@@ -84,10 +84,10 @@
         <aside class="ranking panel" aria-labelledby="rankingTitle">
           <div class="ranking-header">
             <div class="ranking-header-icon" aria-hidden="true">🏆</div>
-            <div><div class="overline">QUEM ESTÁ NO TOPO?</div><h2 id="rankingTitle">Top 5 do ranking</h2></div>
+            <div><div class="overline">CLASSIFICAÇÃO GERAL</div><h2 id="rankingTitle">Ranking completo</h2></div>
           </div>
-          <div class="rank-description">Os participantes com as maiores pontuações.</div>
-          <ol class="leaderboard-list" id="leaderboardList" aria-label="Cinco melhores participantes">
+          <div class="rank-description" id="rankingDescription" aria-live="polite">Carregando os participantes classificados...</div>
+          <ol class="leaderboard-list" id="leaderboardList" aria-label="Todos os participantes por pontuação" tabindex="0">
             <li class="empty-ranking">Aguardando os primeiros participantes…</li>
           </ol>
           <div class="ranking-footer"><span class="ranking-status-indicator" id="rankingIndicator"></span><span id="rankingScope">Ranking deste aparelho</span><button id="refreshRanking" type="button" class="text-button" aria-label="Atualizar ranking">Atualizar ↻</button></div>
