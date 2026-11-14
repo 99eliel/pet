@@ -1,9 +1,9 @@
 /* Funcionamento offline no tablet depois da primeira abertura online. */
-const CACHE = 'pet-grupo6-feira-pwa-v17';
+const CACHE = 'pet-grupo6-feira-pwa-v18';
 const PREFIX = 'pet-grupo6-';
 const APP_FILES = [
   './', './index.html', './admin.html', './styles.css', './tablet.css', './admin.css',
-  './theme.js', './app.js', './admin.js', './install.js', './qr.js',
+  './theme.js', './app.js', './admin.js', './install.js', './qr.js', './fullscreen.js',
   './questions.js', './scores.js', './firebase-config.js',
   './assets/favicon.svg', './assets/logo-pet-vetorial.svg',
   './assets/icon-192.png', './assets/icon-512.png', './manifest.webmanifest'
