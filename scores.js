@@ -138,8 +138,9 @@ export function startLeaderboard({ config, onChange, onMode }) {
     remainingError = false;
     loadingRemaining = documents.length === 100;
     remote = [...firstPage];
+    if (!navigator.onLine) loadingRemaining = false;
     emit();
-    if (!loadingRemaining || !navigator.onLine) return;
+    if (!loadingRemaining) return;
 
     let cursor = documents[documents.length - 1];
     try {
