@@ -37,24 +37,43 @@ function showView(viewName) {
   }
 }
 
-function renderRanking(entries) {
+function renderRanking(entries, mode = rankingMode, details = {}) {
   currentRanking = rankEntries(entries);
   const list = $('leaderboardList');
+  // Manter a posição da rolagem enquanto novas pontuações chegam.
+  const scrollPosition = list.scrollTop;
   list.replaceChildren();
-  if (!currentRanking.length) {
+
+  const total = currentRanking.length;
+  const count = number(total);
+  const description = $('rankingDescription');
+  if (details.loadingMore) {
+    description.textContent = count + ' classificados até agora • carregando demais participantes…';
+  } else if (details.loadError) {
+    description.textContent = count + ' classificados • não foi possível carregar todos; toque em Atualizar ↻';
+  } else {
+    description.textContent = total === 1
+      ? '1 participante classificado'
+      : count + ' participantes classificados';
+  }
+
+  if (!total) {
     const item = document.createElement('li');
     item.className = 'empty-ranking';
     const icon = document.createElement('span');
     icon.className = 'empty-trophy';
     icon.textContent = '🏆';
     const text = document.createElement('span');
-    text.textContent = 'O pódio ainda está vazio. Seja a primeira pessoa a participar!';
+    text.textContent = 'Ainda não há participantes classificados. Seja o primeiro!';
     item.append(icon, text);
     list.append(item);
     return;
   }
-  for (const [index, entry] of currentRanking.slice(0, 5).entries()) {
+
+  const fragment = document.createDocumentFragment();
+  for (const [index, entry] of currentRanking.entries()) {
     const item = document.createElement('li');
+    if (index < 3) item.classList.add('rank-podium');
     const position = document.createElement('span');
     position.className = 'rank-number';
     position.textContent = String(index + 1).padStart(2, '0');
@@ -72,8 +91,10 @@ function renderRanking(entries) {
     suffix.textContent = ' pts';
     points.append(suffix);
     item.append(position, avatar, name, points);
-    list.append(item);
+    fragment.append(item);
   }
+  list.append(fragment);
+  list.scrollTop = scrollPosition;
 }
 
 function setRankingMode(mode, pendingCount = 0) {
