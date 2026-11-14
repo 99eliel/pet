@@ -19,6 +19,7 @@
   <script type="module" src="app.js"></script>
   <script type="module" src="install.js"></script>
   <script type="module" src="qr.js"></script>
+  <script type="module" src="fullscreen.js"></script>
 </head>
 <body>
   <div class="ambient ambient-one" aria-hidden="true"></div>
@@ -29,9 +30,15 @@
         <span class="brand-icon" aria-hidden="true"><img src="assets/favicon.svg" alt=""></span>
         <span class="brand-copy"><strong>PET Saúde</strong><small>RAÍZES DIGITAIS</small></span>
       </a>
-      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Ativar tema claro" title="Alternar tema claro e escuro">
-        <span aria-hidden="true" id="themeToggleIcon">☀</span><span id="themeToggleLabel">Tema claro</span>
-      </button>
+      <div class="header-actions">
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Ativar tema claro" title="Alternar tema claro e escuro">
+          <span aria-hidden="true" id="themeToggleIcon">☀</span><span id="themeToggleLabel">Tema claro</span>
+        </button>
+        <button class="fullscreen-toggle" type="button" data-fullscreen-toggle aria-label="Ativar tela cheia" aria-pressed="false" title="Ativar tela cheia">
+          <span class="fullscreen-icon" aria-hidden="true" data-fullscreen-icon>⛶</span>
+          <span data-fullscreen-label>Tela cheia</span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -131,7 +138,12 @@
         <div class="quiz-meta">
           <div class="quiz-player"><span class="avatar-icon" aria-hidden="true">★</span><div class="quiz-player-name"><small>PARTICIPANTE</small><strong id="currentPlayer">Participante</strong></div></div>
           <div class="quiz-brand" title="PET Saúde — Raízes Digitais"><img src="assets/logo-pet-vetorial.svg" alt="PET Saúde"></div>
-          <div class="quiz-points"><span>PONTOS</span><strong id="runningScore">0</strong></div>
+          <div class="quiz-top-actions">
+            <div class="quiz-points"><span>PONTOS</span><strong id="runningScore">0</strong></div>
+            <button class="fullscreen-toggle fullscreen-toggle-quiz" type="button" data-fullscreen-toggle aria-label="Ativar tela cheia" aria-pressed="false" title="Ativar tela cheia">
+              <span class="fullscreen-icon" aria-hidden="true" data-fullscreen-icon>⛶</span>
+            </button>
+          </div>
         </div>
         <div class="quiz-panel panel">
           <div class="quiz-topline">
@@ -166,11 +178,12 @@
           <div class="result-stats"><div><strong id="correctCount">0/10</strong><small>Acertos</small></div><div><strong id="totalTime">0s</strong><small>Tempo total</small></div><div><strong id="rankPosition">—</strong><small>Colocação</small></div></div>
           <p class="save-message" id="saveMessage" role="status" aria-live="polite"></p>
           <p class="auto-reset" id="resultAutoReset"></p>
-          <div class="result-actions"><button class="btn btn-primary" id="playAgain" type="button">Próximo participante ↗</button><button class="btn btn-outline" id="backToHome" type="button">Ver ranking</button></div>
+          <div class="result-actions"><button class="btn btn-primary" id="playAgain" type="button">Próximo participante ↗</button><button class="btn btn-outline" id="backToHome" type="button">Ver ranking</button><button class="btn btn-outline fullscreen-result-button" type="button" data-fullscreen-toggle aria-label="Ativar tela cheia" aria-pressed="false" title="Ativar tela cheia"><span aria-hidden="true" data-fullscreen-icon>⛶</span> <span data-fullscreen-label>Tela cheia</span></button></div>
         </div>
       </div>
     </section>
   </main>
+  <p id="fullscreenStatus" class="fullscreen-status" role="status" aria-live="polite" hidden></p>
   <dialog id="qrDialog" class="qr-dialog" aria-labelledby="qrTitle" aria-describedby="qrDescription">
     <div class="qr-dialog-heading">
       <img src="assets/favicon.svg" alt="" width="46" height="46">
